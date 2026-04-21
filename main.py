@@ -331,13 +331,7 @@ def del_promotor(pid):
 
 @app.route('/gastos')
 def gastos():
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM semanas ORDER BY fecha_inicio DESC")
-    semanas = cur.fetchall()
-    cur.close()
-    release_conn(conn)
-    return render_template('gastos.html', semanas=semanas)
+    return render_template('gastos.html')
 
 
 @app.route('/api/semanas', methods=['POST'])
@@ -467,6 +461,37 @@ def get_gastos(semana_id):
     for r in rows:
         for k, v in r.items():
             if v is not None and k not in ('cadena', 'tienda'):
+                try:
+                    r[k] = round(float(v), 2)
+                except Exception:
+                    pass
+    return jsonify(rows)
+
+
+@app.route('/api/gastos/<int:semana_id>/detalle')
+def get_gastos_detalle(semana_id):
+    """Gastos por promotor individual para las pestañas de la UI."""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT gs.sueldo_semanal, gs.comisiones, gs.seguro, gs.isn,
+               gs.impuestos, gs.gastos_indirectos, gs.fondo_contingencia,
+               gs.aguinaldo, gs.vacaciones, gs.prima_vacacional, gs.total,
+               p.nombre AS promotor,
+               t.nombre AS tienda,
+               t.cadena
+        FROM gastos_semana gs
+        JOIN promotores p ON p.id = gs.promotor_id
+        JOIN tiendas t ON t.id = p.tienda_id
+        WHERE gs.semana_id = %s
+        ORDER BY t.cadena, t.nombre, p.nombre
+    """, (semana_id,))
+    rows = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    release_conn(conn)
+    for r in rows:
+        for k, v in r.items():
+            if k not in ('promotor', 'tienda', 'cadena') and v is not None:
                 try:
                     r[k] = round(float(v), 2)
                 except Exception:

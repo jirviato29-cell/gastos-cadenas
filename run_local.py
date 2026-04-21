@@ -393,6 +393,31 @@ def get_gastos(semana_id):
     return jsonify(rows)
 
 
+@app.route('/api/gastos/<int:semana_id>/detalle')
+def get_gastos_detalle(semana_id):
+    db   = get_db()
+    rows = ql(db.execute("""
+        SELECT gs.sueldo_semanal, gs.comisiones, gs.seguro, gs.isn,
+               gs.impuestos, gs.gastos_indirectos, gs.fondo_contingencia,
+               gs.aguinaldo, gs.vacaciones, gs.prima_vacacional, gs.total,
+               p.nombre AS promotor,
+               t.nombre AS tienda,
+               t.cadena
+        FROM gastos_semana gs
+        JOIN promotores p ON p.id = gs.promotor_id
+        JOIN tiendas t ON t.id = p.tienda_id
+        WHERE gs.semana_id = ?
+        ORDER BY t.cadena, t.nombre, p.nombre
+    """, (semana_id,)).fetchall())
+    db.close()
+    for r in rows:
+        for k, v in r.items():
+            if k not in ('promotor', 'tienda', 'cadena') and v is not None:
+                try: r[k] = round(float(v), 2)
+                except: pass
+    return jsonify(rows)
+
+
 # ── TELCEL ────────────────────────────────────────────────────────────────────
 
 @app.route('/telcel')
