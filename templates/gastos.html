@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gastos — Gastos Cadenas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
+body{background:#EEF2F7;color:#1A1A1A;}
+.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.topbar h1{font-size:15px;font-weight:700;}
+nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
+nav a:hover,nav a.active{opacity:1;font-weight:700;}
+.main{padding:16px;max-width:1400px;margin:0 auto;}
+.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
+h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
+label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
+input,select{padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#1a5276;}
+.btn{padding:8px 16px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-azul{background:#1a5276;color:#fff;}
+.btn-verde{background:#27AE60;color:#fff;}
+.btn-gris{background:#EEF2F7;color:#444;border:1px solid #D0D9E8;}
+.controls{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.controls>div{display:flex;flex-direction:column;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th{background:#1a5276;color:#fff;padding:7px 5px;text-align:center;white-space:nowrap;position:sticky;top:0;}
+th:first-child,th:nth-child(2){text-align:left;padding-left:8px;}
+td{padding:6px 5px;text-align:right;border-bottom:1px solid #F0F4F9;white-space:nowrap;}
+td:first-child,td:nth-child(2){text-align:left;padding-left:8px;}
+td:nth-child(3){text-align:center;}
+tr:hover td{background:#F5F8FC;}
+tfoot td{background:#EEF2F7;font-weight:700;border-top:2px solid #1a5276;}
+.num{font-variant-numeric:tabular-nums;}
+.spinner{display:none;text-align:center;padding:2rem;color:#1a5276;font-size:13px;}
+.empty{text-align:center;padding:2rem;color:#aaa;font-size:13px;}
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:22px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal h3{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:14px;}
+.frow{margin-bottom:10px;}
+.btns{display:flex;gap:8px;margin-top:14px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>GASTOS CADENAS</h1>
+  <nav>
+    <a href="/promotores">Promotores</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/gastos" class="active">Gastos</a>
+    <a href="/telcel">Telcel</a>
+    <a href="/resumen">Resumen</a>
+  </nav>
+</div>
+<div class="main">
+  <div class="card">
+    <div class="controls">
+      <div>
+        <label>Semana</label>
+        <select id="sel-semana" style="min-width:260px;" onchange="cargarGastos()">
+          <option value="">— Selecciona semana —</option>
+          {% for s in semanas %}
+          <option value="{{ s.id }}">{{ s.fecha_inicio }} al {{ s.fecha_fin }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-azul" onclick="abrirModalSemana()">+ Nueva semana</button>
+      <button class="btn btn-verde" id="btn-generar" onclick="generarGastos()" disabled>⚙ Generar / Actualizar gastos</button>
+    </div>
+    <div id="spinner" class="spinner">Calculando gastos...</div>
+    <div id="tabla-container">
+      <div class="empty">Selecciona una semana y presiona "Generar gastos"</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-semana">
+<div class="modal">
+  <h3>Nueva semana</h3>
+  <div class="frow"><label>Fecha inicio (lunes)</label><input type="date" id="ns-inicio"></div>
+  <div class="frow"><label>Fecha fin (domingo)</label><input type="date" id="ns-fin"></div>
+  <div class="btns">
+    <button class="btn btn-azul" onclick="guardarSemana()">Guardar</button>
+    <button class="btn btn-gris" onclick="cerrarModal()">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<script>
+const f$ = n => '$' + parseFloat(n || 0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+document.getElementById('sel-semana').addEventListener('change', () => {
+  document.getElementById('btn-generar').disabled = !document.getElementById('sel-semana').value;
+});
+// Habilitar si ya viene semana seleccionada al cargar
+if (document.getElementById('sel-semana').value)
+  document.getElementById('btn-generar').disabled = false;
+
+async function generarGastos() {
+  const sid = document.getElementById('sel-semana').value;
+  if (!sid) return;
+  const btn = document.getElementById('btn-generar');
+  btn.disabled = true; btn.textContent = 'Generando...';
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('tabla-container').innerHTML = '';
+  try {
+    const r = await fetch('/api/gastos/generar', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({semana_id: sid})
+    });
+    const d = await r.json();
+    if (!d.ok) { alert('Error: ' + d.error); return; }
+    await cargarGastos();
+  } finally {
+    btn.disabled = false; btn.textContent = '⚙ Generar / Actualizar gastos';
+    document.getElementById('spinner').style.display = 'none';
+  }
+}
+
+async function cargarGastos() {
+  const sid = document.getElementById('sel-semana').value;
+  if (!sid) { document.getElementById('tabla-container').innerHTML = '<div class="empty">Selecciona una semana</div>'; return; }
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('tabla-container').innerHTML = '';
+  const r = await fetch(`/api/gastos/${sid}`);
+  const rows = await r.json();
+  document.getElementById('spinner').style.display = 'none';
+
+  if (!rows.length) {
+    document.getElementById('tabla-container').innerHTML = '<div class="empty">Sin datos. Presiona "Generar / Actualizar gastos".</div>';
+    return;
+  }
+
+  const cols = ['sueldos','comisiones','seguro','isn','impuestos','aguinaldo','vacaciones','prima_vacacional','gastos_indirectos','fondo_contingencia','total'];
+  const headers = ['Sueldos','Comisiones','Seguro','ISN','Impuestos','Aguinaldo','Vacaciones','Prima Vac','G. Indirectos','F. Contingencia','Total'];
+  const totales = {};
+  cols.forEach(c => totales[c] = 0);
+  let totalPromotores = 0;
+
+  let html = `<div style="overflow-x:auto;"><table>
+    <thead><tr>
+      <th>Cadena</th><th>Tienda</th><th>Proms</th>
+      ${headers.map(h => `<th>${h}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  rows.forEach(r => {
+    totalPromotores += r.promotores || 0;
+    cols.forEach(c => totales[c] += r[c] || 0);
+    html += `<tr>
+      <td><strong>${r.cadena}</strong></td>
+      <td>${r.tienda}</td>
+      <td style="text-align:center;">${r.promotores}</td>
+      ${cols.map(c => `<td class="num">${f$(r[c])}</td>`).join('')}
+    </tr>`;
+  });
+
+  html += `</tbody><tfoot><tr>
+    <td colspan="2"><strong>TOTALES</strong></td>
+    <td style="text-align:center;font-weight:700;">${totalPromotores}</td>
+    ${cols.map(c => `<td class="num" style="${c==='total'?'background:#1a5276;color:#fff;':''}">${f$(totales[c])}</td>`).join('')}
+  </tr></tfoot></table></div>`;
+
+  document.getElementById('tabla-container').innerHTML = html;
+}
+
+function abrirModalSemana() {
+  // Autocompletar con semana actual (lunes-domingo)
+  const hoy = new Date();
+  const dow = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
+  const lun = new Date(hoy); lun.setDate(hoy.getDate() - dow);
+  const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
+  const fmt = d => d.toISOString().slice(0,10);
+  document.getElementById('ns-inicio').value = fmt(lun);
+  document.getElementById('ns-fin').value = fmt(dom);
+  document.getElementById('modal-semana').classList.add('show');
+}
+
+async function guardarSemana() {
+  const fi = document.getElementById('ns-inicio').value;
+  const ff = document.getElementById('ns-fin').value;
+  if (!fi || !ff) { alert('Completa ambas fechas.'); return; }
+  const r = await fetch('/api/semanas', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({fecha_inicio: fi, fecha_fin: ff})
+  });
+  const d = await r.json();
+  if (d.ok) { cerrarModal(); location.reload(); }
+  else alert('Error: ' + d.error);
+}
+
+function cerrarModal() { document.getElementById('modal-semana').classList.remove('show'); }
+document.getElementById('modal-semana').addEventListener('click', e => { if(e.target===e.currentTarget) cerrarModal(); });
+
+// Cargar si hay semana seleccionada
+if (document.getElementById('sel-semana').value) cargarGastos();
+</script>
+</body>
+</html>

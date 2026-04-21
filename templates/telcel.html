@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telcel — Gastos Cadenas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
+body{background:#EEF2F7;color:#1A1A1A;}
+.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.topbar h1{font-size:15px;font-weight:700;}
+nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
+nav a:hover,nav a.active{opacity:1;font-weight:700;}
+.main{padding:16px;max-width:900px;margin:0 auto;}
+.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
+h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
+label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
+input,select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#1a5276;}
+.btn{padding:9px 20px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-azul{background:#1a5276;color:#fff;}
+.btn:disabled{background:#C5D0E0;cursor:not-allowed;opacity:1;}
+.drop-zone{border:2.5px dashed #A3BBDF;border-radius:10px;padding:36px;text-align:center;color:#888;cursor:pointer;transition:border-color .2s,background .2s;margin:12px 0;}
+.drop-zone:hover,.drop-zone.over{border-color:#1a5276;background:#EEF2F7;}
+.drop-zone input[type=file]{display:none;}
+.drop-zone .icon{font-size:36px;margin-bottom:8px;}
+.drop-zone .sub{font-size:12px;margin-top:4px;}
+.result-box{border-radius:10px;padding:14px;margin-top:12px;display:none;}
+.result-ok{background:#D5F5E3;border:1.5px solid #27AE60;color:#1A5C2A;}
+.result-err{background:#FADBD8;border:1.5px solid #E74C3C;color:#7B241C;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#1a5276;color:#fff;padding:7px 8px;text-align:left;white-space:nowrap;}
+th:last-child{text-align:right;}
+td{padding:6px 8px;border-bottom:1px solid #F0F4F9;}
+td:last-child{text-align:right;font-weight:600;}
+tr:hover td{background:#F5F8FC;}
+tfoot td{background:#EEF2F7;font-weight:700;border-top:2px solid #1a5276;}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
+.badge-verde{background:#D5F5E3;color:#1A5C2A;}
+.badge-gris{background:#F0F4F9;color:#666;}
+.prog{display:none;text-align:center;padding:16px;color:#1a5276;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>GASTOS CADENAS</h1>
+  <nav>
+    <a href="/promotores">Promotores</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/gastos">Gastos</a>
+    <a href="/telcel" class="active">Telcel</a>
+    <a href="/resumen">Resumen</a>
+  </nav>
+</div>
+<div class="main">
+  <div class="card">
+    <h2>Cargar comisiones Telcel (.xlsx)</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:14px;">
+      El archivo debe tener columnas: <strong>subclave</strong> (o fzavta), <strong>producto</strong>, <strong>comis</strong> (o comision/importe).<br>
+      Al subir reemplaza todos los pagos previos de esa semana.
+    </p>
+    <div style="margin-bottom:12px;">
+      <label>Semana</label>
+      <select id="sel-semana" style="max-width:360px;">
+        <option value="">— Selecciona semana —</option>
+        {% for s in semanas %}
+        <option value="{{ s.id }}">{{ s.fecha_inicio }} al {{ s.fecha_fin }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+         ondragover="ev(event,'over')" ondragleave="ev(event,'')" ondrop="drop(event)">
+      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="archivoSeleccionado(this.files[0])">
+      <div class="icon">📊</div>
+      <div id="drop-label">Arrastra el archivo Excel aquí o haz clic para seleccionar</div>
+      <div class="sub" id="drop-sub">Formatos: .xlsx, .xls</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-azul" id="btn-subir" onclick="subir()" disabled>Subir y procesar</button>
+      <button class="btn" style="background:#EEF2F7;border:1px solid #D0D9E8;color:#444;" onclick="limpiar()">Limpiar</button>
+    </div>
+    <div class="prog" id="prog">Procesando archivo...</div>
+    <div class="result-box" id="result-box"></div>
+  </div>
+
+  <div class="card" id="tabla-card" style="display:none;">
+    <h2>Resumen por subclave — <span id="tbl-semana-lbl"></span></h2>
+    <div style="overflow-x:auto;">
+    <table id="tbl-result">
+      <thead><tr><th>Subclave</th><th>Tienda</th><th>Cadena</th><th>Total comisión</th></tr></thead>
+      <tbody id="tbl-body"></tbody>
+      <tfoot><tr><td colspan="3"><strong>TOTAL</strong></td><td id="tbl-total"></td></tr></tfoot>
+    </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let archivoActual = null;
+
+function ev(e, cls) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.toggle('over', cls === 'over');
+}
+
+function drop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) archivoSeleccionado(f);
+}
+
+function archivoSeleccionado(f) {
+  if (!f) return;
+  archivoActual = f;
+  document.getElementById('drop-label').textContent = '📄 ' + f.name;
+  document.getElementById('drop-sub').textContent = (f.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('btn-subir').disabled = false;
+  document.getElementById('result-box').style.display = 'none';
+}
+
+function limpiar() {
+  archivoActual = null;
+  document.getElementById('drop-label').textContent = 'Arrastra el archivo Excel aquí o haz clic para seleccionar';
+  document.getElementById('drop-sub').textContent = 'Formatos: .xlsx, .xls';
+  document.getElementById('file-input').value = '';
+  document.getElementById('btn-subir').disabled = true;
+  document.getElementById('result-box').style.display = 'none';
+  document.getElementById('tabla-card').style.display = 'none';
+}
+
+async function subir() {
+  const sid = document.getElementById('sel-semana').value;
+  if (!sid) { alert('Selecciona una semana.'); return; }
+  if (!archivoActual) { alert('Selecciona un archivo Excel.'); return; }
+
+  const btn = document.getElementById('btn-subir');
+  btn.disabled = true;
+  document.getElementById('prog').style.display = 'block';
+  document.getElementById('result-box').style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('semana_id', sid);
+  fd.append('archivo', archivoActual);
+
+  try {
+    const r = await fetch('/api/telcel/upload', {method:'POST', body: fd});
+    const d = await r.json();
+    const box = document.getElementById('result-box');
+    if (d.ok) {
+      box.className = 'result-box result-ok';
+      box.innerHTML = `✅ Archivo procesado — <strong>${d.filas}</strong> filas importadas.`;
+      box.style.display = 'block';
+      mostrarTabla(d.resumen, sid);
+    } else {
+      box.className = 'result-box result-err';
+      box.innerHTML = '❌ Error: ' + d.error;
+      box.style.display = 'block';
+    }
+  } catch(e) {
+    const box = document.getElementById('result-box');
+    box.className = 'result-box result-err';
+    box.innerHTML = '❌ Error de conexión: ' + e.message;
+    box.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    document.getElementById('prog').style.display = 'none';
+  }
+}
+
+function mostrarTabla(resumen, sid) {
+  const sel = document.getElementById('sel-semana');
+  const lbl = sel.options[sel.selectedIndex]?.text || '';
+  document.getElementById('tbl-semana-lbl').textContent = lbl;
+  const f$ = n => '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  let total = 0;
+  let html = '';
+  resumen.forEach(r => {
+    total += r.total;
+    const tiendaLbl = r.tienda === 'Sin tienda asignada'
+      ? '<span style="color:#E74C3C;font-size:11px;">Sin tienda asignada</span>'
+      : r.tienda;
+    html += `<tr>
+      <td><strong>${r.subclave}</strong></td>
+      <td>${tiendaLbl}</td>
+      <td>${r.cadena || ''}</td>
+      <td>${f$(r.total)}</td>
+    </tr>`;
+  });
+  document.getElementById('tbl-body').innerHTML = html;
+  document.getElementById('tbl-total').textContent = f$(total);
+  document.getElementById('tabla-card').style.display = 'block';
+}
+</script>
+</body>
+</html>

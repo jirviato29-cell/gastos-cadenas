@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tiendas — Gastos Cadenas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
+body{background:#EEF2F7;color:#1A1A1A;}
+.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.topbar h1{font-size:15px;font-weight:700;}
+nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
+nav a:hover,nav a.active{opacity:1;font-weight:700;}
+.main{padding:16px;max-width:1100px;margin:0 auto;}
+.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
+h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
+label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+input,select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#1a5276;}
+.btn{padding:8px 16px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-azul{background:#1a5276;color:#fff;}
+.btn-gris{background:#EEF2F7;color:#444;border:1px solid #D0D9E8;}
+.btn-edit{background:#FEF9E7;border:1px solid #F39C12;color:#7D6608;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
+.btn-del{background:#FADBD8;border:1px solid #E74C3C;color:#7B241C;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#1a5276;color:#fff;padding:8px 8px;text-align:left;white-space:nowrap;}
+td{padding:7px 8px;border-bottom:1px solid #F0F4F9;vertical-align:top;}
+tr:hover td{background:#F5F8FC;}
+.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;margin:1px;}
+.badge-azul{background:#D6EAF8;color:#1a5276;}
+.badge-gris{background:#F0F4F9;color:#666;}
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:22px;width:460px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal h3{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:14px;}
+.frow{margin-bottom:10px;}
+.btns{display:flex;gap:8px;margin-top:14px;}
+.sub-row{display:flex;gap:6px;margin-bottom:5px;}
+.sub-row input{flex:1;}
+.sub-row button{background:none;border:1px solid #D0D9E8;border-radius:6px;padding:5px 9px;cursor:pointer;color:#888;font-size:13px;}
+.conf{font-size:12px;font-weight:700;color:#27AE60;padding:4px 0;display:none;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>GASTOS CADENAS</h1>
+  <nav>
+    <a href="/promotores">Promotores</a>
+    <a href="/tiendas" class="active">Tiendas</a>
+    <a href="/gastos">Gastos</a>
+    <a href="/telcel">Telcel</a>
+    <a href="/resumen">Resumen</a>
+  </nav>
+</div>
+<div class="main">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="margin:0;">Tiendas ({{ tiendas|length }})</h2>
+      <button class="btn btn-azul" onclick="abrirModal()">+ Nueva tienda</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Cadena</th><th>Nombre</th><th>Clave principal</th><th>Subclaves Telcel</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="tbody">
+      {% for t in tiendas %}
+      <tr id="tr-{{ t.id }}">
+        <td><strong>{{ t.cadena }}</strong></td>
+        <td>{{ t.nombre }}</td>
+        <td><span class="badge badge-azul">{{ t.clave_principal }}</span></td>
+        <td>
+          {% if t.subclaves %}
+            {% for s in t.subclaves %}<span class="badge badge-gris">{{ s }}</span>{% endfor %}
+          {% else %}<span style="color:#aaa;font-size:11px;">Sin subclaves</span>{% endif %}
+        </td>
+        <td style="white-space:nowrap;">
+          <button class="btn-edit" onclick='editarTienda({{ t.id }}, {{ t|tojson }})'>Editar</button>
+          <button class="btn-del" onclick="borrarTienda({{ t.id }}, '{{ t.nombre }}')">Borrar</button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;padding:2rem;color:#aaa;">Sin tiendas registradas</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+<div class="modal">
+  <h3 id="modal-title">Nueva tienda</h3>
+  <input type="hidden" id="m-id">
+  <div class="frow"><label>Cadena</label><input id="m-cadena" placeholder="Ej: Walmart, Soriana..."></div>
+  <div class="frow"><label>Nombre de tienda</label><input id="m-nombre" placeholder="Ej: Walmart Aguascalientes Centro"></div>
+  <div class="frow"><label>Clave principal Telcel</label><input id="m-clave" placeholder="Ej: WAL001"></div>
+  <div class="frow">
+    <label>Subclaves Telcel <button type="button" onclick="addSubFila()" style="background:#1a5276;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px;">+ Sub</button></label>
+    <div id="subs-container"></div>
+  </div>
+  <div class="conf" id="modal-conf"></div>
+  <div class="btns">
+    <button class="btn btn-azul" onclick="guardarTienda()">Guardar</button>
+    <button class="btn btn-gris" onclick="cerrar()">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<script>
+let editId = null;
+
+function abrirModal(t) {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Nueva tienda';
+  document.getElementById('m-id').value = '';
+  document.getElementById('m-cadena').value = '';
+  document.getElementById('m-nombre').value = '';
+  document.getElementById('m-clave').value = '';
+  document.getElementById('subs-container').innerHTML = '';
+  addSubFila();
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function editarTienda(id, t) {
+  editId = id;
+  document.getElementById('modal-title').textContent = 'Editar tienda';
+  document.getElementById('m-cadena').value = t.cadena;
+  document.getElementById('m-nombre').value = t.nombre;
+  document.getElementById('m-clave').value = t.clave_principal;
+  document.getElementById('subs-container').innerHTML = '';
+  const subs = t.subclaves || [];
+  if (subs.length) subs.forEach(s => addSubFila(s));
+  else addSubFila();
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function addSubFila(val='') {
+  const c = document.getElementById('subs-container');
+  const d = document.createElement('div');
+  d.className = 'sub-row';
+  d.innerHTML = `<input type="text" placeholder="Subclave" value="${val}">
+    <button onclick="this.parentElement.remove()">✕</button>`;
+  c.appendChild(d);
+}
+
+function getSubclaves() {
+  return [...document.querySelectorAll('#subs-container input')]
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+async function guardarTienda() {
+  const payload = {
+    cadena: document.getElementById('m-cadena').value.trim(),
+    nombre: document.getElementById('m-nombre').value.trim(),
+    clave_principal: document.getElementById('m-clave').value.trim(),
+    subclaves: getSubclaves()
+  };
+  if (!payload.cadena || !payload.nombre || !payload.clave_principal) {
+    alert('Cadena, nombre y clave principal son obligatorios.');
+    return;
+  }
+  const url = editId ? `/api/tiendas/${editId}` : '/api/tiendas';
+  const method = editId ? 'PUT' : 'POST';
+  const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  const data = await res.json();
+  if (data.ok) { cerrar(); location.reload(); }
+  else alert('Error: ' + data.error);
+}
+
+async function borrarTienda(id, nombre) {
+  if (!confirm(`¿Borrar la tienda "${nombre}"? También se eliminarán sus subclaves.`)) return;
+  const res = await fetch(`/api/tiendas/${id}`, {method:'DELETE'});
+  const data = await res.json();
+  if (data.ok) document.getElementById(`tr-${id}`)?.remove();
+  else alert('Error: ' + data.error);
+}
+
+function cerrar() { document.getElementById('modal-bg').classList.remove('show'); }
+document.getElementById('modal-bg').addEventListener('click', e => { if(e.target===e.currentTarget) cerrar(); });
+</script>
+</body>
+</html>

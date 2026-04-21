@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Promotores — Gastos Cadenas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
+body{background:#EEF2F7;color:#1A1A1A;}
+.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.topbar h1{font-size:15px;font-weight:700;}
+nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
+nav a:hover,nav a.active{opacity:1;font-weight:700;}
+.main{padding:16px;max-width:1200px;margin:0 auto;}
+.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
+h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
+label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
+input,select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#1a5276;}
+.btn{padding:8px 16px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;}
+.btn:hover{opacity:.85;}
+.btn-azul{background:#1a5276;color:#fff;}
+.btn-gris{background:#EEF2F7;color:#444;border:1px solid #D0D9E8;}
+.btn-edit{background:#FEF9E7;border:1px solid #F39C12;color:#7D6608;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
+.btn-del{background:#FADBD8;border:1px solid #E74C3C;color:#7B241C;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
+.search{padding:7px 11px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;width:260px;margin-bottom:10px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#1a5276;color:#fff;padding:8px 6px;text-align:center;white-space:nowrap;}
+th:first-child{text-align:left;padding-left:10px;}
+td{padding:6px 6px;text-align:center;border-bottom:1px solid #F0F4F9;}
+td:first-child{text-align:left;padding-left:10px;font-weight:600;}
+tr:hover td{background:#F5F8FC;}
+.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;}
+.badge-verde{background:#D5F5E3;color:#1A5C2A;}
+.badge-rojo{background:#FADBD8;color:#7B241C;}
+.badge-azul{background:#D6EAF8;color:#1a5276;}
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:22px;width:440px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal h3{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:14px;}
+.frow{margin-bottom:10px;}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.btns{display:flex;gap:8px;margin-top:14px;}
+.check-row{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.check-row input[type=checkbox]{width:auto;accent-color:#1a5276;}
+.conf{font-size:12px;font-weight:700;color:#27AE60;padding:4px 0;display:none;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>GASTOS CADENAS</h1>
+  <nav>
+    <a href="/promotores" class="active">Promotores</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/gastos">Gastos</a>
+    <a href="/telcel">Telcel</a>
+    <a href="/resumen">Resumen</a>
+  </nav>
+</div>
+<div class="main">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h2 style="margin:0;">Promotores ({{ promotores|length }})</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" class="search" placeholder="Buscar..." oninput="filtrar(this.value)">
+        <button class="btn btn-azul" onclick="abrirModal()">+ Agregar</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table id="tabla">
+      <thead><tr>
+        <th>Nombre</th>
+        <th>Cadena / Tienda</th>
+        <th>Sueldo mensual</th>
+        <th>Sueldo semanal</th>
+        <th>Antigüedad</th>
+        <th>Días vac/ley</th>
+        <th>Seguro</th>
+        <th>Ingreso</th>
+        <th>Acciones</th>
+      </tr></thead>
+      <tbody>
+      {% for p in promotores %}
+      <tr data-nombre="{{ p.nombre|lower }}" data-tienda="{{ (p.tienda_nombre or '')|lower }}">
+        <td>{{ p.nombre }}</td>
+        <td style="font-size:11px;">
+          {% if p.tienda_nombre %}
+            <div style="font-weight:700;">{{ p.cadena }}</div>
+            <div style="color:#666;">{{ p.tienda_nombre }}</div>
+          {% else %}<span style="color:#aaa;">Sin tienda</span>{% endif %}
+        </td>
+        <td>${{ "%.2f"|format(p.sueldo) }}</td>
+        <td>${{ "%.2f"|format(p.sueldo_semanal) }}</td>
+        <td>{{ p.anos }} años</td>
+        <td>{{ p.dias_vac }} días</td>
+        <td>
+          {% if p.tiene_seguro %}
+            <span class="badge badge-verde">Sí $696.42</span>
+          {% else %}
+            <span class="badge badge-rojo">No</span>
+          {% endif %}
+        </td>
+        <td style="font-size:11px;color:#888;">{{ p.fecha_ingreso_str }}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn-edit" onclick='editar({{ p|tojson }})'>Editar</button>
+          <button class="btn-del" onclick="borrar({{ p.id }}, '{{ p.nombre }}')">Borrar</button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" style="text-align:center;padding:2rem;color:#aaa;">Sin promotores registrados</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+<div class="modal">
+  <h3 id="modal-title">Agregar promotor</h3>
+  <input type="hidden" id="m-id">
+  <div class="frow"><label>Nombre completo</label><input id="m-nombre" placeholder="Nombre del promotor"></div>
+  <div class="frow"><label>Tienda</label>
+    <select id="m-tienda">
+      <option value="">— Sin tienda —</option>
+      {% for t in tiendas %}
+      <option value="{{ t.id }}">{{ t.cadena }} — {{ t.nombre }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="frow2">
+    <div><label>Sueldo mensual ($)</label><input type="number" id="m-sueldo" min="0" step="0.01" placeholder="0.00" oninput="previewCalculo()"></div>
+    <div><label>Fecha de ingreso</label><input type="date" id="m-fecha" oninput="previewCalculo()"></div>
+  </div>
+  <div class="frow2">
+    <div><label>Días de vacaciones tomados</label><input type="number" id="m-vacstom" min="0" value="0"></div>
+    <div>
+      <label>Seguro IMSS</label>
+      <div class="check-row">
+        <input type="checkbox" id="m-seguro" onchange="previewCalculo()">
+        <label for="m-seguro" style="text-transform:none;font-size:13px;font-weight:400;">Tiene seguro (+$696.42/sem)</label>
+      </div>
+    </div>
+  </div>
+  <div id="preview" style="background:#EEF2F7;border-radius:8px;padding:10px;font-size:12px;display:none;margin-bottom:8px;">
+    <strong style="color:#1a5276;">Vista previa de gastos semanales:</strong>
+    <div id="preview-content" style="margin-top:6px;line-height:1.8;"></div>
+  </div>
+  <div class="btns">
+    <button class="btn btn-azul" onclick="guardar()">Guardar</button>
+    <button class="btn btn-gris" onclick="cerrar()">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<script>
+let editId = null;
+
+function abrirModal() {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Agregar promotor';
+  ['m-nombre','m-sueldo','m-fecha'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-tienda').value = '';
+  document.getElementById('m-seguro').checked = false;
+  document.getElementById('m-vacstom').value = 0;
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function editar(p) {
+  editId = p.id;
+  document.getElementById('modal-title').textContent = 'Editar promotor';
+  document.getElementById('m-nombre').value = p.nombre;
+  document.getElementById('m-tienda').value = p.tienda_id || '';
+  document.getElementById('m-sueldo').value = p.sueldo;
+  document.getElementById('m-fecha').value = p.fecha_ingreso_str || '';
+  document.getElementById('m-seguro').checked = p.tiene_seguro;
+  document.getElementById('m-vacstom').value = p.dias_vacaciones_tomados || 0;
+  previewCalculo();
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function previewCalculo() {
+  const sueldo = parseFloat(document.getElementById('m-sueldo').value) || 0;
+  const fecha = document.getElementById('m-fecha').value;
+  const seguro = document.getElementById('m-seguro').checked;
+  if (!sueldo || !fecha) { document.getElementById('preview').style.display = 'none'; return; }
+
+  const fi = new Date(fecha + 'T12:00:00');
+  const anos = Math.max(0, (Date.now() - fi) / (365.25 * 24 * 3600 * 1000));
+  const anosInt = Math.floor(anos);
+  const diasVac = anosInt < 1 ? 0 : anosInt < 2 ? 12 : anosInt < 3 ? 14 : anosInt < 4 ? 16 : anosInt < 5 ? 18 : anosInt < 10 ? 20 : 22;
+  const sd = sueldo / 30;
+  const ss = (sueldo / 4.33).toFixed(2);
+  const ag = ((sd * 15) / 52).toFixed(2);
+  const vac = ((diasVac * sd) / 52).toFixed(2);
+  const pv = (parseFloat(vac) * 0.25).toFixed(2);
+  const seg = seguro ? 696.42 : 0;
+  const total = (parseFloat(ss) + seg + 61.54 + 417.05 + 274 + 27 + parseFloat(ag) + parseFloat(vac) + parseFloat(pv)).toFixed(2);
+  const f$ = n => '$' + parseFloat(n).toLocaleString('es-MX', {minimumFractionDigits:2});
+
+  document.getElementById('preview-content').innerHTML =
+    `Sueldo semanal: <b>${f$(ss)}</b> | Aguinaldo: <b>${f$(ag)}</b> | Vacaciones: <b>${f$(vac)}</b> | Prima vac: <b>${f$(pv)}</b><br>
+     Seguro: <b>${f$(seg)}</b> | ISN: <b>$61.54</b> | Impuestos: <b>$417.05</b> | G.Indir: <b>$274</b> | F.Cont: <b>$27</b><br>
+     Antigüedad: <b>${anos.toFixed(1)} años</b> · Días vacaciones ley: <b>${diasVac}</b> · <strong>TOTAL SEMANAL: ${f$(total)}</strong>`;
+  document.getElementById('preview').style.display = 'block';
+}
+
+async function guardar() {
+  const payload = {
+    nombre: document.getElementById('m-nombre').value.trim(),
+    tienda_id: document.getElementById('m-tienda').value || null,
+    sueldo: parseFloat(document.getElementById('m-sueldo').value) || 0,
+    fecha_ingreso: document.getElementById('m-fecha').value,
+    tiene_seguro: document.getElementById('m-seguro').checked,
+    dias_vacaciones_tomados: parseInt(document.getElementById('m-vacstom').value) || 0
+  };
+  if (!payload.nombre || !payload.fecha_ingreso) { alert('Nombre y fecha de ingreso son obligatorios.'); return; }
+  const url = editId ? `/api/promotores/${editId}` : '/api/promotores';
+  const method = editId ? 'PUT' : 'POST';
+  const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  const data = await res.json();
+  if (data.ok) { cerrar(); location.reload(); }
+  else alert('Error: ' + data.error);
+}
+
+async function borrar(id, nombre) {
+  if (!confirm(`¿Borrar a "${nombre}"?`)) return;
+  const res = await fetch(`/api/promotores/${id}`, {method:'DELETE'});
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else alert('Error: ' + data.error);
+}
+
+function filtrar(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#tabla tbody tr[data-nombre]').forEach(tr => {
+    const match = tr.dataset.nombre.includes(q) || tr.dataset.tienda.includes(q);
+    tr.style.display = match ? '' : 'none';
+  });
+}
+
+function cerrar() { document.getElementById('modal-bg').classList.remove('show'); }
+document.getElementById('modal-bg').addEventListener('click', e => { if(e.target===e.currentTarget) cerrar(); });
+</script>
+</body>
+</html>
