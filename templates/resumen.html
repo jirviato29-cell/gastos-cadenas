@@ -3,50 +3,41 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Resumen — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
-body{background:#EEF2F7;color:#1A1A1A;}
-.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.topbar h1{font-size:15px;font-weight:700;}
-nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
-nav a:hover,nav a.active{opacity:1;font-weight:700;}
 .main{padding:16px;max-width:1000px;margin:0 auto;}
-.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
-h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
-label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
-select{padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;min-width:280px;}
-select:focus{outline:none;border-color:#1a5276;}
+select{width:auto;min-width:280px;}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
-.stat{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:14px;text-align:center;}
+.stat{background:#fff;border:1px solid #E8EDF5;border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,28,75,.06);}
 .stat .n{font-size:22px;font-weight:700;}
-.stat .l{font-size:11px;color:#888;margin-top:3px;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:#1a5276;color:#fff;padding:8px 8px;text-align:right;white-space:nowrap;}
-th:first-child,th:nth-child(2){text-align:left;}
-th:nth-child(3){text-align:center;}
-td{padding:7px 8px;border-bottom:1px solid #F0F4F9;text-align:right;white-space:nowrap;}
-td:first-child,td:nth-child(2){text-align:left;}
+.stat .l{font-size:11px;color:#94A3B8;margin-top:4px;}
+th:nth-child(4),th:nth-child(5),th:nth-child(6),th:nth-child(7){text-align:right;}
 td:nth-child(3){text-align:center;}
-tr:hover td{background:#F5F8FC;}
+td:nth-child(4),td:nth-child(5),td:nth-child(6),td:nth-child(7){text-align:right;font-variant-numeric:tabular-nums;}
+tfoot td:nth-child(4),tfoot td:nth-child(5),tfoot td:nth-child(6),tfoot td:nth-child(7){text-align:right;}
 .tr-cadena td{background:#EEF2F7;font-weight:700;}
-tfoot td{background:#1a5276;color:#fff;font-weight:700;border-top:2px solid #1a5276;}
-.pos{color:#27AE60;font-weight:700;}
-.neg{color:#E74C3C;font-weight:700;}
-.empty{text-align:center;padding:2rem;color:#aaa;font-size:13px;}
-.spinner{display:none;text-align:center;padding:2rem;color:#1a5276;font-size:13px;}
+.pos{color:#16A34A;font-weight:700;}
+.neg{color:#DC2626;font-weight:700;}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>GASTOS CADENAS</h1>
-  <nav>
-    <a href="/promotores">Promotores</a>
-    <a href="/tiendas">Tiendas</a>
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
+    <a href="/comisiones">Comisiones</a>
+    <a href="/comisiones-extra">Comisiones Extra</a>
     <a href="/telcel">Telcel</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/promotores">Promotores</a>
     <a href="/resumen" class="active">Resumen</a>
   </nav>
 </div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><span class="print-empresa">GASTOS CADENAS</span></div>
 <div class="main">
   <div class="card">
     <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
@@ -106,12 +97,7 @@ async function cargarResumen() {
     return;
   }
 
-  // Agrupar por cadena
-  const cadenas = {};
-  rows.forEach(r => {
-    if (!cadenas[r.cadena]) cadenas[r.cadena] = [];
-    cadenas[r.cadena].push(r);
-  });
+  rows.sort((a,b) => (a.cadena + a.tienda).localeCompare(b.cadena + b.tienda));
 
   let totalGastos = 0, totalIngresos = 0;
 
@@ -121,36 +107,19 @@ async function cargarResumen() {
       <th>Gastos</th><th>Ingresos Telcel</th><th>Utilidad</th><th>%</th>
     </tr></thead><tbody>`;
 
-  Object.entries(cadenas).forEach(([cadena, tiendas]) => {
-    const cGastos = tiendas.reduce((a,t) => a + t.gastos, 0);
-    const cIngresos = tiendas.reduce((a,t) => a + t.ingresos, 0);
-    const cUtil = cIngresos - cGastos;
-    const cPct = cGastos > 0 ? ((cUtil / cGastos) * 100).toFixed(1) : '—';
-    totalGastos += cGastos;
-    totalIngresos += cIngresos;
-
-    tiendas.forEach(t => {
-      const pct = t.gastos > 0 ? ((t.utilidad / t.gastos) * 100).toFixed(1) : '—';
-      const uClass = t.utilidad >= 0 ? 'pos' : 'neg';
-      html += `<tr>
-        <td>${cadena}</td>
-        <td>${t.tienda}</td>
-        <td style="text-align:center;">${t.promotores}</td>
-        <td>${f$(t.gastos)}</td>
-        <td>${f$(t.ingresos)}</td>
-        <td class="${uClass}">${f$(t.utilidad)}</td>
-        <td class="${uClass}" style="font-size:11px;">${pct}${pct!=='—'?'%':''}</td>
-      </tr>`;
-    });
-
-    // Fila subtotal por cadena
-    const subClass = cUtil >= 0 ? 'pos' : 'neg';
-    html += `<tr class="tr-cadena">
-      <td colspan="3">Subtotal ${cadena}</td>
-      <td>${f$(cGastos)}</td>
-      <td>${f$(cIngresos)}</td>
-      <td class="${subClass}">${f$(cUtil)}</td>
-      <td class="${subClass}" style="font-size:11px;">${cPct}${cPct!=='—'?'%':''}</td>
+  rows.forEach(t => {
+    const pct = t.gastos > 0 ? ((t.utilidad / t.gastos) * 100).toFixed(1) : '—';
+    const uClass = t.utilidad >= 0 ? 'pos' : 'neg';
+    totalGastos  += t.gastos;
+    totalIngresos += t.ingresos;
+    html += `<tr>
+      <td>${t.cadena}</td>
+      <td>${t.tienda}</td>
+      <td style="text-align:center;">${t.promotores}</td>
+      <td>${f$(t.gastos)}</td>
+      <td>${f$(t.ingresos)}</td>
+      <td class="${uClass}">${f$(t.utilidad)}</td>
+      <td class="${uClass}" style="font-size:11px;">${pct}${pct!=='—'?'%':''}</td>
     </tr>`;
   });
 

@@ -3,60 +3,47 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tiendas — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
-body{background:#EEF2F7;color:#1A1A1A;}
-.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.topbar h1{font-size:15px;font-weight:700;}
-nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
-nav a:hover,nav a.active{opacity:1;font-weight:700;}
 .main{padding:16px;max-width:1100px;margin:0 auto;}
-.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
-h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
-label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
-input,select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
-input:focus,select:focus{outline:none;border-color:#1a5276;}
-.btn{padding:8px 16px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .15s;}
-.btn:hover{opacity:.85;}
-.btn-azul{background:#1a5276;color:#fff;}
-.btn-gris{background:#EEF2F7;color:#444;border:1px solid #D0D9E8;}
-.btn-edit{background:#FEF9E7;border:1px solid #F39C12;color:#7D6608;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
-.btn-del{background:#FADBD8;border:1px solid #E74C3C;color:#7B241C;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:#1a5276;color:#fff;padding:8px 8px;text-align:left;white-space:nowrap;}
-td{padding:7px 8px;border-bottom:1px solid #F0F4F9;vertical-align:top;}
-tr:hover td{background:#F5F8FC;}
-.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;margin:1px;}
-.badge-azul{background:#D6EAF8;color:#1a5276;}
-.badge-gris{background:#F0F4F9;color:#666;}
-.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
-.modal-bg.show{display:flex;}
-.modal{background:#fff;border-radius:12px;padding:22px;width:460px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
-.modal h3{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:14px;}
-.frow{margin-bottom:10px;}
-.btns{display:flex;gap:8px;margin-top:14px;}
+th:nth-child(4),th:nth-child(5){text-align:left;}
+td:nth-child(4),td:nth-child(5){text-align:left;}
+td:first-child{font-weight:700;color:#002855;}
 .sub-row{display:flex;gap:6px;margin-bottom:5px;}
 .sub-row input{flex:1;}
 .sub-row button{background:none;border:1px solid #D0D9E8;border-radius:6px;padding:5px 9px;cursor:pointer;color:#888;font-size:13px;}
-.conf{font-size:12px;font-weight:700;color:#27AE60;padding:4px 0;display:none;}
+.conf{font-size:12px;font-weight:700;color:#16A34A;padding:4px 0;display:none;}
+.frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
+.frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
+.modal{width:480px;}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>GASTOS CADENAS</h1>
-  <nav>
-    <a href="/promotores">Promotores</a>
-    <a href="/tiendas" class="active">Tiendas</a>
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
+    <a href="/comisiones">Comisiones</a>
+    <a href="/comisiones-extra">Comisiones Extra</a>
     <a href="/telcel">Telcel</a>
+    <a href="/tiendas" class="active">Tiendas</a>
+    <a href="/promotores">Promotores</a>
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-info"></div></div></div>
 <div class="main">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <h2 style="margin:0;">Tiendas ({{ tiendas|length }})</h2>
-      <button class="btn btn-azul" onclick="abrirModal()">+ Nueva tienda</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn no-print" onclick="window.print()" style="background:#FF6B00;color:#fff;">🖨 Imprimir PDF</button>
+        <button class="btn btn-azul no-print" onclick="abrirModal()">+ Nueva tienda</button>
+      </div>
     </div>
     <div style="overflow-x:auto;">
     <table>
@@ -96,7 +83,7 @@ tr:hover td{background:#F5F8FC;}
   <div class="frow"><label>Nombre de tienda</label><input id="m-nombre" placeholder="Ej: Walmart Aguascalientes Centro"></div>
   <div class="frow"><label>Clave principal Telcel</label><input id="m-clave" placeholder="Ej: WAL001"></div>
   <div class="frow">
-    <label>Subclaves Telcel <button type="button" onclick="addSubFila()" style="background:#1a5276;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px;">+ Sub</button></label>
+    <label>Subclaves Telcel <button type="button" onclick="addSubFila()" style="background:#002855;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px;">+ Sub</button></label>
     <div id="subs-container"></div>
   </div>
   <div class="conf" id="modal-conf"></div>
@@ -178,6 +165,13 @@ async function borrarTienda(id, nombre) {
 
 function cerrar() { document.getElementById('modal-bg').classList.remove('show'); }
 document.getElementById('modal-bg').addEventListener('click', e => { if(e.target===e.currentTarget) cerrar(); });
+
+(function(){
+  const d = new Date();
+  const f = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+  const el = document.getElementById('print-info');
+  if (el) el.textContent = 'Tiendas — ' + f;
+})();
 </script>
 </body>
 </html>

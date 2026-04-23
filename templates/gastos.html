@@ -3,81 +3,49 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gastos — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
-body{background:#EEF2F7;color:#1A1A1A;}
-.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.topbar h1{font-size:15px;font-weight:700;}
-nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
-nav a:hover,nav a.active{opacity:1;font-weight:700;}
 .main{padding:16px;max-width:1100px;margin:0 auto;}
-
-/* Controls */
-.controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:14px;}
-.controls label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
-.controls select{padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;min-width:280px;}
-.controls select:focus{outline:none;border-color:#1a5276;}
-.btn{padding:8px 16px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
-.btn:hover{opacity:.85;}
+.controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid #E8EDF5;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,28,75,.06);}
+.controls label{font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;display:block;}
+.controls select{min-width:280px;}
+.btn-verde{background:#16A34A;color:#fff;}
 .btn:disabled{background:#C5D0E0;cursor:not-allowed;opacity:1;}
-.btn-azul{background:#1a5276;color:#fff;}
-.btn-verde{background:#27AE60;color:#fff;}
-.btn-gris{background:#EEF2F7;color:#444;border:1px solid #D0D9E8;}
-
-/* Counter */
-.counter{background:linear-gradient(135deg,#1a5276 0%,#21618C 100%);color:#fff;border-radius:12px;padding:22px 24px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-.counter-left .lbl{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-.counter-left .total{font-size:44px;font-weight:700;letter-spacing:-1px;line-height:1;}
-.counter-left .sub{font-size:12px;opacity:.65;margin-top:5px;}
-.counter-right{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.mini-stat{background:rgba(255,255,255,.12);border-radius:8px;padding:9px 14px;text-align:center;}
-.mini-stat .n{font-size:16px;font-weight:700;}
-.mini-stat .l{font-size:10px;opacity:.7;margin-top:2px;}
-
-/* Tabs */
-.tabs-wrap{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:12px 14px 0;margin-bottom:0;}
-.tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:0;}
-.tab{padding:7px 14px;border-radius:7px 7px 0 0;border:1.5px solid #D0D9E8;border-bottom:none;font-size:12px;font-weight:700;cursor:pointer;background:#EEF2F7;color:#666;transition:all .15s;}
-.tab:hover{border-color:#1a5276;color:#1a5276;background:#fff;}
-.tab.active{background:#1a5276;color:#fff;border-color:#1a5276;}
-
-/* Tab content */
-.tab-body{background:#fff;border:1px solid #D8E2F0;border-top:3px solid #1a5276;border-radius:0 0 10px 10px;padding:0;margin-bottom:14px;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:#f5f8fc;color:#1a5276;padding:9px 10px;text-align:left;border-bottom:2px solid #D8E2F0;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+.tabs-wrap{background:#fff;border:1px solid #E8EDF5;border-radius:12px 12px 0 0;padding:12px 14px 0;margin-bottom:0;}
+.tabs{display:flex;flex-wrap:wrap;gap:5px;}
+.tab{padding:7px 15px;border-radius:7px 7px 0 0;border:1.5px solid #D8E2F0;border-bottom:none;font-size:12px;font-weight:600;cursor:pointer;background:#F5F7FA;color:#64748B;transition:all .15s;font-family:'Inter',sans-serif;}
+.tab:hover{border-color:#002855;color:#002855;background:#fff;}
+.tab.active{background:#002855;color:#fff;border-color:#002855;}
+.tab-body{background:#fff;border:1.5px solid #E8EDF5;border-top:3px solid #FF6B00;border-radius:0 0 12px 12px;margin-bottom:14px;overflow:hidden;}
+th{text-align:left;}
 th:last-child{text-align:right;}
-td{padding:8px 10px;border-bottom:1px solid #F0F4F9;vertical-align:middle;}
 td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
-td:first-child{font-weight:700;color:#1a5276;}
-tr:hover td{background:#F5F8FC;}
-tfoot td{background:#EEF2F7;font-weight:700;border-top:2px solid #D8E2F0;padding:10px 10px;}
-tfoot td:last-child{color:#1a5276;font-size:14px;}
-.empty{padding:3rem;text-align:center;color:#aaa;font-size:13px;}
-
-/* Modal */
-.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
-.modal-bg.show{display:flex;}
-.modal{background:#fff;border-radius:12px;padding:22px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
-.modal h3{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:14px;}
-.frow{margin-bottom:12px;}
-.frow label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
-.frow input,.frow select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;}
-.frow input:focus{outline:none;border-color:#1a5276;}
-.preview-sem{background:#EEF2F7;border-radius:7px;padding:10px 12px;font-size:13px;font-weight:700;color:#1a5276;margin-top:8px;min-height:36px;}
-.btns{display:flex;gap:8px;margin-top:16px;}
+td:first-child{font-weight:600;color:#002855;}
+tfoot td:last-child{font-size:14px;}
+.frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
+.frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
+.preview-sem{background:#EEF2F7;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;color:#002855;margin-top:8px;min-height:36px;}
+@media print{.controls,.tabs-wrap{display:none!important;}.tab-body{border-top:none!important;border-radius:0!important;}}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>GASTOS CADENAS</h1>
-  <nav>
-    <a href="/promotores">Promotores</a>
-    <a href="/tiendas">Tiendas</a>
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
     <a href="/gastos" class="active">Gastos</a>
+    <a href="/comisiones">Comisiones</a>
+    <a href="/comisiones-extra">Comisiones Extra</a>
     <a href="/telcel">Telcel</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/promotores">Promotores</a>
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-tab-info"></div></div></div>
 <div class="main">
 
   <!-- Controls -->
@@ -90,21 +58,6 @@ tfoot td:last-child{color:#1a5276;font-size:14px;}
     </div>
     <button class="btn btn-azul" onclick="abrirModalSemana()">+ Nueva semana</button>
     <button class="btn btn-verde" id="btn-generar" onclick="generarGastos()" disabled>⚙ Generar / Actualizar</button>
-  </div>
-
-  <!-- Contador -->
-  <div class="counter">
-    <div class="counter-left">
-      <div class="lbl">Total semana seleccionada</div>
-      <div class="total" id="counter-total">$0.00</div>
-      <div class="sub" id="counter-sub">Selecciona una semana</div>
-    </div>
-    <div class="counter-right" id="counter-mini">
-      <div class="mini-stat"><div class="n" id="mn-proms">0</div><div class="l">Promotores</div></div>
-      <div class="mini-stat"><div class="n" id="mn-tiendas">0</div><div class="l">Tiendas</div></div>
-      <div class="mini-stat"><div class="n" id="mn-cadenas">0</div><div class="l">Cadenas</div></div>
-      <div class="mini-stat"><div class="n" id="mn-seguros">0</div><div class="l">Con seguro</div></div>
-    </div>
   </div>
 
   <!-- Pestañas -->
@@ -138,25 +91,36 @@ tfoot td:last-child{color:#1a5276;font-size:14px;}
 <script>
 // ── Config pestañas ────────────────────────────────────────────────────────
 const TABS = [
-  {key:'sueldo_semanal',     label:'Sueldos'},
-  {key:'comisiones',         label:'Comisiones'},
+  {key:'resumen',            label:'Resumen'},
+  {key:'sueldos_comisiones', label:'Sueldos y Comisiones'},
   {key:'seguro',             label:'Seguro'},
-  {key:'isn',                label:'ISN'},
-  {key:'impuestos',          label:'Impuestos'},
+  {key:'isn_impuestos',      label:'Impuestos'},
   {key:'gastos_indirectos',  label:'Gastos Indirectos'},
   {key:'fondo_contingencia', label:'Fondo Contingencia'},
   {key:'aguinaldo',          label:'Aguinaldo'},
-  {key:'vacaciones',         label:'Vacaciones'},
-  {key:'prima_vacacional',   label:'Prima Vacacional'},
+  {key:'vac_prima',          label:'Vacaciones'},
 ];
 
 let detalleData = [];
-let tabActivo   = 'sueldo_semanal';
+let tabActivo   = 'resumen';
 let semLabel    = '';
 
 // ── Utilidades ─────────────────────────────────────────────────────────────
 const f$ = n => '$' + parseFloat(n||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
 const d2 = n => n.toString().padStart(2,'0');
+
+function printBar() {
+  return `<div class="no-print" style="display:flex;justify-content:flex-end;padding:10px 14px 2px;">
+    <button onclick="imprimirTab()" style="background:#FF6B00;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:12px;font-weight:700;cursor:pointer;">🖨 Imprimir</button>
+  </div>`;
+}
+
+function imprimirTab() {
+  const lbl = TABS.find(t => t.key === tabActivo)?.label || tabActivo;
+  const el  = document.getElementById('print-tab-info');
+  if (el) el.textContent = lbl + ' — ' + semLabel;
+  window.print();
+}
 
 function formatSemana(fi, ff) {
   const lun = new Date(fi + 'T12:00:00');
@@ -271,6 +235,353 @@ function setTab(key, el) {
   renderTab();
 }
 
+function renderResumen() {
+  const cont = document.getElementById('tab-content');
+
+  const COLS = [
+    {key:'sueldo_semanal',    label:'Sueldos'},
+    {key:'comisiones',        label:'Comisiones'},
+    {key:'seguro',            label:'Seguro'},
+    {key:'isn_impuestos',     label:'Impuestos'},
+    {key:'gastos_indirectos', label:'G. Indirectos'},
+    {key:'fondo_contingencia',label:'F. Contingencia'},
+    {key:'aguinaldo',         label:'Aguinaldo'},
+    {key:'vac_prima',         label:'Vacaciones'},
+    {key:'total',             label:'Total'},
+  ];
+
+  const rows = detalleData.map(r => ({
+    ...r,
+    isn_impuestos: Math.round(((r.isn||0)       + (r.impuestos||0))       * 100) / 100,
+    vac_prima:     Math.round(((r.vacaciones||0) + (r.prima_vacacional||0)) * 100) / 100,
+  }));
+
+  const grupos = {}, orden = [];
+  rows.forEach(r => {
+    const key = r.cadena + '||' + r.tienda;
+    if (!grupos[key]) {
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0 };
+      COLS.forEach(c => grupos[key][c.key] = 0);
+      orden.push(key);
+    }
+    grupos[key].proms += 1;
+    COLS.forEach(c => {
+      grupos[key][c.key] = Math.round((grupos[key][c.key] + (r[c.key] || 0)) * 100) / 100;
+    });
+  });
+
+  // Valores fijos — no vienen de gastos_semana
+  orden.forEach(k => {
+    const n = grupos[k].proms;
+    grupos[k].isn_impuestos      = Math.round((61.54 * n + 417.05) * 100) / 100;
+    grupos[k].gastos_indirectos  = 274.00;
+    grupos[k].fondo_contingencia = Math.round(27.00 * n * 100) / 100;
+    grupos[k].total = Math.round((
+      grupos[k].sueldo_semanal + grupos[k].comisiones + grupos[k].seguro +
+      grupos[k].isn_impuestos  + grupos[k].gastos_indirectos +
+      grupos[k].fondo_contingencia + grupos[k].aguinaldo + grupos[k].vac_prima
+    ) * 100) / 100;
+  });
+
+  const filas = orden.map(k => grupos[k])
+                     .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+
+  const totales = { proms: 0 };
+  COLS.forEach(c => totales[c.key] = 0);
+  filas.forEach(g => {
+    totales.proms += g.proms;
+    COLS.forEach(c => totales[c.key] = Math.round((totales[c.key] + g[c.key]) * 100) / 100);
+  });
+
+  const ra = 'text-align:right;', ca = 'text-align:center;';
+
+  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
+    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:38px;font-weight:700;line-height:1;">${filas.length}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas</div>
+    </div>
+    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totales.total)}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total general</div>
+    </div>
+  </div>`;
+
+  html += `<div style="overflow-x:auto;"><table>
+    <thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+      ${COLS.map(c => `<th style="${ra}">${c.label}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  filas.forEach(g => {
+    html += `<tr>
+      <td>${g.cadena}</td>
+      <td style="font-weight:400;">${g.tienda}</td>
+      <td style="${ca}font-weight:400;">${g.proms}</td>
+      ${COLS.map(c => `<td style="${ra}">${f$(g[c.key])}</td>`).join('')}
+    </tr>`;
+  });
+
+  html += `</tbody><tfoot><tr>
+    <td colspan="2">TOTAL</td>
+    <td style="${ca}">${totales.proms}</td>
+    ${COLS.map(c => `<td style="${ra}">${f$(totales[c.key])}</td>`).join('')}
+  </tr></tfoot></table></div>`;
+
+  cont.innerHTML = html;
+}
+
+function renderVacPrima() {
+  const cont = document.getElementById('tab-content');
+  const ra = 'text-align:right;', ca = 'text-align:center;';
+
+  const grupos = {}, orden = [];
+  detalleData.forEach(r => {
+    const key = r.cadena + '||' + r.tienda;
+    if (!grupos[key]) {
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, vac: 0, pv: 0 };
+      orden.push(key);
+    }
+    grupos[key].proms += 1;
+    grupos[key].vac = Math.round((grupos[key].vac + (r.vacaciones      || 0)) * 100) / 100;
+    grupos[key].pv  = Math.round((grupos[key].pv  + (r.prima_vacacional|| 0)) * 100) / 100;
+  });
+
+  orden.forEach(k => { grupos[k].total = Math.round((grupos[k].vac + grupos[k].pv) * 100) / 100; });
+
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+
+  const totVac   = conGasto.reduce((s,g) => Math.round((s + g.vac)   * 100) / 100, 0);
+  const totPv    = conGasto.reduce((s,g) => Math.round((s + g.pv)    * 100) / 100, 0);
+  const totTotal = Math.round((totVac + totPv) * 100) / 100;
+
+  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
+    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
+    </div>
+    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totTotal)}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — Vacaciones</div>
+    </div>
+  </div>`;
+
+  html += `<table>
+    <thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+      <th style="${ra}">Vacaciones</th><th style="${ra}">Prima Vacacional</th><th style="${ra}">Total</th>
+    </tr></thead><tbody>`;
+
+  conGasto.forEach(g => {
+    html += `<tr>
+      <td>${g.cadena}</td>
+      <td style="font-weight:400;">${g.tienda}</td>
+      <td style="${ca}font-weight:400;">${g.proms}</td>
+      <td style="${ra}">${f$(g.vac)}</td>
+      <td style="${ra}">${f$(g.pv)}</td>
+      <td style="${ra}">${f$(g.total)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody><tfoot><tr>
+    <td colspan="3">SUBTOTAL — Vacaciones</td>
+    <td style="${ra}">${f$(totVac)}</td>
+    <td style="${ra}">${f$(totPv)}</td>
+    <td style="${ra}">${f$(totTotal)}</td>
+  </tr></tfoot></table>`;
+
+  if (sinGasto.length) {
+    html += `<table style="margin-top:0;border-top:none;">
+      <thead><tr>
+        <th colspan="6" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
+      </tr></thead><tbody>`;
+    sinGasto.forEach(g => {
+      html += `<tr>
+        <td style="color:#aaa;">${g.cadena}</td>
+        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
+        <td style="${ca}color:#aaa;">${g.proms}</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  cont.innerHTML = html;
+}
+
+function renderIsnImpuestos() {
+  const cont = document.getElementById('tab-content');
+  const ra = 'text-align:right;', ca = 'text-align:center;';
+
+  const grupos = {}, orden = [];
+  detalleData.forEach(r => {
+    const key = r.cadena + '||' + r.tienda;
+    if (!grupos[key]) {
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, isn: 0, impuestos: 0 };
+      orden.push(key);
+    }
+    grupos[key].proms += 1;
+  });
+
+  // ISN: $61.54 por promotor. Impuestos: $417.05 fijo por tienda (no viene de gastos_semana)
+  orden.forEach(k => {
+    grupos[k].isn       = Math.round(61.54 * grupos[k].proms * 100) / 100;
+    grupos[k].impuestos = 417.05;
+    grupos[k].total     = Math.round((grupos[k].isn + grupos[k].impuestos) * 100) / 100;
+  });
+
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+
+  const totIsn       = conGasto.reduce((s,g) => Math.round((s + g.isn)       * 100) / 100, 0);
+  const totImpuestos = conGasto.reduce((s,g) => Math.round((s + g.impuestos) * 100) / 100, 0);
+  const totTotal     = Math.round((totIsn + totImpuestos) * 100) / 100;
+
+  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
+    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
+    </div>
+    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totTotal)}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — Impuestos</div>
+    </div>
+  </div>`;
+
+  html += `<table>
+    <thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+      <th style="${ra}">ISN</th><th style="${ra}">Impuestos</th><th style="${ra}">Total</th>
+    </tr></thead><tbody>`;
+
+  conGasto.forEach(g => {
+    html += `<tr>
+      <td>${g.cadena}</td>
+      <td style="font-weight:400;">${g.tienda}</td>
+      <td style="${ca}font-weight:400;">${g.proms}</td>
+      <td style="${ra}">${f$(g.isn)}</td>
+      <td style="${ra}">${f$(g.impuestos)}</td>
+      <td style="${ra}">${f$(g.total)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody><tfoot><tr>
+    <td colspan="3">SUBTOTAL — Impuestos</td>
+    <td style="${ra}">${f$(totIsn)}</td>
+    <td style="${ra}">${f$(totImpuestos)}</td>
+    <td style="${ra}">${f$(totTotal)}</td>
+  </tr></tfoot></table>`;
+
+  if (sinGasto.length) {
+    html += `<table style="margin-top:0;border-top:none;">
+      <thead><tr>
+        <th colspan="6" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
+      </tr></thead><tbody>`;
+    sinGasto.forEach(g => {
+      html += `<tr>
+        <td style="color:#aaa;">${g.cadena}</td>
+        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
+        <td style="${ca}color:#aaa;">${g.proms}</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  cont.innerHTML = html;
+}
+
+function renderSueldosComisiones() {
+  const cont = document.getElementById('tab-content');
+  const ra = 'text-align:right;', ca = 'text-align:center;';
+
+  const grupos = {}, orden = [];
+  detalleData.forEach(r => {
+    const key = r.cadena + '||' + r.tienda;
+    if (!grupos[key]) {
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, sueldos: 0, comisiones: 0 };
+      orden.push(key);
+    }
+    grupos[key].proms      += 1;
+    grupos[key].sueldos    = Math.round((grupos[key].sueldos    + (r.sueldo_semanal || 0)) * 100) / 100;
+    grupos[key].comisiones = Math.round((grupos[key].comisiones + (r.comisiones     || 0)) * 100) / 100;
+  });
+
+  orden.forEach(k => { grupos[k].total = Math.round((grupos[k].sueldos + grupos[k].comisiones) * 100) / 100; });
+
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+
+  const totSueldos    = conGasto.reduce((s,g) => Math.round((s + g.sueldos)    * 100) / 100, 0);
+  const totComisiones = conGasto.reduce((s,g) => Math.round((s + g.comisiones) * 100) / 100, 0);
+  const totTotal      = Math.round((totSueldos + totComisiones) * 100) / 100;
+
+  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
+    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
+    </div>
+    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totTotal)}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — Sueldos y Comisiones</div>
+    </div>
+  </div>`;
+
+  html += `<table>
+    <thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+      <th style="${ra}">Sueldos</th><th style="${ra}">Comisiones</th><th style="${ra}">Total</th>
+    </tr></thead><tbody>`;
+
+  conGasto.forEach(g => {
+    html += `<tr>
+      <td>${g.cadena}</td>
+      <td style="font-weight:400;">${g.tienda}</td>
+      <td style="${ca}font-weight:400;">${g.proms}</td>
+      <td style="${ra}">${f$(g.sueldos)}</td>
+      <td style="${ra}">${f$(g.comisiones)}</td>
+      <td style="${ra}">${f$(g.total)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody><tfoot><tr>
+    <td colspan="3">SUBTOTAL — Sueldos y Comisiones</td>
+    <td style="${ra}">${f$(totSueldos)}</td>
+    <td style="${ra}">${f$(totComisiones)}</td>
+    <td style="${ra}">${f$(totTotal)}</td>
+  </tr></tfoot></table>`;
+
+  if (sinGasto.length) {
+    html += `<table style="margin-top:0;border-top:none;">
+      <thead><tr>
+        <th colspan="6" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
+      </tr></thead><tbody>`;
+    sinGasto.forEach(g => {
+      html += `<tr>
+        <td style="color:#aaa;">${g.cadena}</td>
+        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
+        <td style="${ca}color:#aaa;">${g.proms}</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+        <td style="${ra}color:#aaa;">$0.00</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  cont.innerHTML = html;
+}
+
 function renderTab() {
   const cont = document.getElementById('tab-content');
   if (!detalleData.length) {
@@ -278,27 +589,91 @@ function renderTab() {
     return;
   }
 
-  const label    = TABS.find(t => t.key === tabActivo)?.label || tabActivo;
-  const subtotal = detalleData.reduce((s,r) => s + (r[tabActivo]||0), 0);
+  if (tabActivo === 'resumen')            { renderResumen(); return; }
+  if (tabActivo === 'sueldos_comisiones') { renderSueldosComisiones(); return; }
+  if (tabActivo === 'isn_impuestos')      { renderIsnImpuestos(); return; }
+  if (tabActivo === 'vac_prima')          { renderVacPrima(); return; }
 
-  let html = `<table>
+  const label = TABS.find(t => t.key === tabActivo)?.label || tabActivo;
+
+  // Agrupar por Cadena + Tienda
+  const grupos = {};
+  const orden  = [];
+  detalleData.forEach(r => {
+    const key = r.cadena + '||' + r.tienda;
+    if (!grupos[key]) {
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, monto: 0, proms: 0 };
+      orden.push(key);
+    }
+    grupos[key].proms += 1;
+  });
+
+  // Valores fijos por tienda o por promotor — no vienen de gastos_semana
+  if (tabActivo === 'gastos_indirectos') {
+    orden.forEach(k => { grupos[k].monto = 274.00; });
+  } else if (tabActivo === 'fondo_contingencia') {
+    orden.forEach(k => { grupos[k].monto = Math.round(27.00 * grupos[k].proms * 100) / 100; });
+  } else {
+    detalleData.forEach(r => {
+      const key = r.cadena + '||' + r.tienda;
+      grupos[key].monto = Math.round((grupos[key].monto + (r[tabActivo] || 0)) * 100) / 100;
+    });
+  }
+
+  // Separar con gasto vs sin gasto, ordenar por cadena+tienda
+  const conGasto  = orden.map(k => grupos[k]).filter(g => g.monto > 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto  = orden.map(k => grupos[k]).filter(g => g.monto === 0)
+                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+
+  const total = conGasto.reduce((s,g) => Math.round((s + g.monto) * 100) / 100, 0);
+
+  // Tarjetas de resumen
+  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
+    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
+    </div>
+    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
+      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(total)}</div>
+      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — ${label}</div>
+    </div>
+  </div>`;
+
+  html += `<table>
     <thead><tr>
-      <th>Cadena</th><th>Tienda</th><th>Promotor</th><th>Monto</th>
+      <th>Cadena</th><th>Tienda</th><th>Promotores</th><th>${label}</th>
     </tr></thead><tbody>`;
 
-  detalleData.forEach(r => {
+  conGasto.forEach(g => {
     html += `<tr>
-      <td>${r.cadena}</td>
-      <td style="font-weight:400;">${r.tienda}</td>
-      <td style="font-weight:400;color:#1A1A1A;">${r.promotor}</td>
-      <td>${f$(r[tabActivo])}</td>
+      <td>${g.cadena}</td>
+      <td style="font-weight:400;">${g.tienda}</td>
+      <td style="text-align:center;font-weight:400;">${g.proms}</td>
+      <td>${f$(g.monto)}</td>
     </tr>`;
   });
 
   html += `</tbody><tfoot><tr>
     <td colspan="3">SUBTOTAL — ${label}</td>
-    <td>${f$(subtotal)}</td>
+    <td>${f$(total)}</td>
   </tr></tfoot></table>`;
+
+  if (sinGasto.length) {
+    html += `<table style="margin-top:0;border-top:none;">
+      <thead><tr>
+        <th colspan="4" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
+      </tr></thead><tbody>`;
+    sinGasto.forEach(g => {
+      html += `<tr>
+        <td style="color:#aaa;">${g.cadena}</td>
+        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
+        <td style="text-align:center;color:#aaa;">${g.proms}</td>
+        <td style="color:#aaa;">$0.00</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
 
   cont.innerHTML = html;
 }

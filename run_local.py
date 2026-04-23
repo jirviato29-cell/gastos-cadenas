@@ -6,9 +6,10 @@ Ejecutar: python run_local.py
 import sqlite3
 import os
 from flask import Flask, render_template, request, jsonify, redirect
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from io import BytesIO
 import openpyxl
+import xlrd
 
 app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = 'local-test-2026'
@@ -42,17 +43,26 @@ def dias_vacaciones_ley(anos):
 
 
 def calcular_gasto_promotor(p):
-    sueldo = float(p['sueldo'] or 0)
-    sd  = sueldo / 30
-    ss  = round(sueldo / 4.33, 2)
-    fi  = p['fecha_ingreso']
-    if isinstance(fi, str):
-        fi = datetime.strptime(fi, '%Y-%m-%d').date()
-    anos    = max(0, (date.today() - fi).days / 365.25)
-    dias_vac = dias_vacaciones_ley(int(anos))
-    ag  = round((sd * 15) / 52, 2)
-    vac = round((dias_vac * sd) / 52, 2)
-    pv  = round(vac * 0.25, 2)
+    fi = p.get('fecha_ingreso')
+    if not fi:
+        return {
+            'sueldo_semanal': 0, 'aguinaldo': 0, 'vacaciones': 0,
+            'prima_vacacional': 0, 'seguro': 0, 'isn': 0,
+            'impuestos': 0, 'gastos_indirectos': 0,
+            'fondo_contingencia': 0, 'total': 0,
+            'anos': 0, 'dias_vac': 0,
+        }
+    fi = datetime.strptime(str(fi)[:10], '%Y-%m-%d').date()
+    ss  = float(p['sueldo'] or 0)        # ya es semanal
+    sd  = round(ss / 7, 2)               # sueldo diario = sueldo semanal ÷ 7
+    anos = max(0, (date.today() - fi).days / 365.25)
+    ag   = round((sd * 15) / 52, 2)
+    if anos < 1:
+        vac, pv, dias_vac = 0.0, 0.0, 0
+    else:
+        dias_vac = dias_vacaciones_ley(int(anos))
+        vac = round((dias_vac * sd) / 52, 2)
+        pv  = round(vac * 0.25, 2)
     seg = 696.42 if p.get('tiene_seguro') else 0.0
     isn, imp, gi, fc = 61.54, 417.05, 274.0, 27.0
     total = round(ss + seg + isn + imp + gi + fc + ag + vac + pv, 2)
@@ -75,10 +85,12 @@ def init_db():
         );
         CREATE TABLE IF NOT EXISTS promotores (
             id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+            promotor_id             TEXT,
             nombre                  TEXT NOT NULL,
             tienda_id               INTEGER REFERENCES tiendas(id),
             sueldo                  REAL NOT NULL DEFAULT 0,
-            fecha_ingreso           TEXT NOT NULL,
+            comisiones              REAL DEFAULT 0,
+            fecha_ingreso           TEXT,
             tiene_seguro            INTEGER DEFAULT 0,
             dias_vacaciones_tomados INTEGER DEFAULT 0
         );
@@ -118,8 +130,30 @@ def init_db():
             producto  TEXT,
             comision  REAL DEFAULT 0
         );
+        CREATE TABLE IF NOT EXISTS comisiones_extra (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            semana_id INTEGER REFERENCES semanas(id) ON DELETE CASCADE,
+            tipo      TEXT NOT NULL,
+            monto     REAL NOT NULL DEFAULT 0,
+            notas     TEXT
+        );
     """)
     db.commit()
+    try:
+        db.execute("ALTER TABLE promotores ADD COLUMN promotor_id TEXT")
+        db.commit()
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE promotores ADD COLUMN fecha_ingreso TEXT")
+        db.commit()
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE promotores ADD COLUMN comisiones REAL DEFAULT 0")
+        db.commit()
+    except Exception:
+        pass
     db.close()
     print("SQLite DB inicializada —", DB_PATH)
 
@@ -269,6 +303,94 @@ def del_promotor(pid):
         db.close()
 
 
+@app.route('/api/promotores/importar', methods=['POST'])
+def importar_promotores():
+    f = request.files.get('archivo')
+    if not f:
+        return jsonify({'ok': False, 'error': 'No se recibió archivo'}), 400
+    try:
+        filename = f.filename.lower()
+        raw = f.read()
+        all_rows = []
+        if filename.endswith('.xls'):
+            wb_xls = xlrd.open_workbook(file_contents=raw)
+            ws_xls = wb_xls.sheet_by_index(0)
+            for i in range(1, ws_xls.nrows):  # saltar encabezado
+                all_rows.append([ws_xls.cell_value(i, c) if c < ws_xls.ncols else None for c in range(8)])
+        else:
+            wb = openpyxl.load_workbook(BytesIO(raw), data_only=True)
+            ws = wb.active
+            for row in list(ws.iter_rows(min_row=2, values_only=True)):
+                all_rows.append(list(row[:8]))
+
+        db = get_db()
+        # Índice de tiendas: nombre exacto y nombre parcial
+        tiendas_all = ql(db.execute("SELECT id, nombre FROM tiendas").fetchall())
+        tiendas_idx = {t['nombre'].strip().lower(): t['id'] for t in tiendas_all}
+
+        def buscar_tienda(nombre_excel):
+            clave = nombre_excel.strip().lower()
+            if clave in tiendas_idx:
+                return tiendas_idx[clave]
+            # Coincidencia parcial: el nombre de la DB contiene el del Excel
+            for nom, tid in tiendas_idx.items():
+                if clave and (clave in nom or nom.endswith(clave)):
+                    return tid
+            return None
+
+        insertados = actualizados = errores = 0
+        errores_detalle = []
+
+        for row in all_rows:
+            # Formato SUELDOS: B=Cadena, C=Tienda, D=ID corto, E=CLAVE (promotor_id), F=Nombre, K=Sueldo
+            tienda_nombre = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ''
+            promotor_id   = str(row[4]).strip() if len(row) > 4 and row[4] is not None else ''
+            nombre        = str(row[5]).strip() if len(row) > 5 and row[5] is not None else ''
+            sueldo_raw    = row[10] if len(row) > 10 else None
+
+            # Saltar filas sin promotor_id válido (encabezados, filas vacías, subtotales)
+            if not promotor_id or not nombre or promotor_id in ('CLAVE', 'ID', 'None', ''):
+                continue
+
+            tienda_id = buscar_tienda(tienda_nombre)
+            if not tienda_id and tienda_nombre:
+                errores_detalle.append(f'{promotor_id}: tienda "{tienda_nombre}" no encontrada')
+
+            try:
+                sueldo = float(sueldo_raw or 0)
+            except (TypeError, ValueError):
+                sueldo = 0.0
+
+            existing = db.execute(
+                "SELECT id FROM promotores WHERE promotor_id=? LIMIT 1", (promotor_id,)
+            ).fetchone()
+
+            try:
+                if existing:
+                    db.execute("""
+                        UPDATE promotores SET nombre=?, tienda_id=?, sueldo=?, tiene_seguro=0
+                        WHERE id=?
+                    """, (nombre, tienda_id, sueldo, existing['id']))
+                    actualizados += 1
+                else:
+                    db.execute("""
+                        INSERT INTO promotores (promotor_id, nombre, tienda_id, sueldo,
+                            fecha_ingreso, tiene_seguro, dias_vacaciones_tomados)
+                        VALUES (?,?,?,?,NULL,0,0)
+                    """, (promotor_id, nombre, tienda_id, sueldo))
+                    insertados += 1
+            except Exception as e:
+                errores += 1
+                errores_detalle.append(f'{promotor_id}: {e}')
+
+        db.commit()
+        db.close()
+        return jsonify({'ok': True, 'insertados': insertados, 'actualizados': actualizados,
+                        'errores': errores, 'errores_detalle': errores_detalle[:10]})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
 # ── SEMANAS Y GASTOS ──────────────────────────────────────────────────────────
 
 @app.route('/gastos')
@@ -290,10 +412,14 @@ def list_semanas():
 @app.route('/api/semanas', methods=['POST'])
 def add_semana():
     d  = request.json
+    fi = datetime.strptime(d['fecha_inicio'], '%Y-%m-%d').date()
+    lunes = fi - timedelta(days=fi.weekday())
+    domingo = lunes + timedelta(days=6)
+    print(f"Fecha recibida: {fi}, Lunes calculado: {lunes}")
     db = get_db()
     try:
         cur = db.execute("INSERT INTO semanas (fecha_inicio, fecha_fin) VALUES (?,?)",
-                         (d['fecha_inicio'], d['fecha_fin']))
+                         (lunes.isoformat(), domingo.isoformat()))
         db.commit(); return jsonify({'ok': True, 'id': cur.lastrowid})
     except Exception as e:
         db.rollback(); return jsonify({'ok': False, 'error': str(e)}), 400
@@ -317,18 +443,17 @@ def generar_gastos():
         """, (semana_id,)).fetchall())
         com_tienda = {r['tienda_id']: float(r['total'] or 0) for r in com_rows}
 
-        cnt_rows = ql(db.execute("""
-            SELECT tienda_id, COUNT(*) AS cnt FROM promotores
-            WHERE tienda_id IS NOT NULL GROUP BY tienda_id
-        """).fetchall())
-        cnt_tienda = {r['tienda_id']: int(r['cnt']) for r in cnt_rows}
-
         for p in proms:
             p['tiene_seguro'] = bool(p['tiene_seguro'])
             g   = calcular_gasto_promotor(p)
-            tid = p['tienda_id']
-            cnt = cnt_tienda.get(tid, 1) or 1
-            com = round(com_tienda.get(tid, 0) / cnt, 2)
+            # impuestos, gastos_indirectos y fondo_contingencia son fijos por tienda;
+            # se guardan en 0 por promotor y se inyectan como constante en get_gastos()
+            total_promotor = round(
+                g['sueldo_semanal'] + g['seguro'] + g['isn'] +
+                g['aguinaldo'] + g['vacaciones'] + g['prima_vacacional'], 2
+            )
+            com = round(float(p.get('comisiones') or 0), 2)
+            total_final = round(total_promotor + com, 2)
             db.execute("""
                 INSERT INTO gastos_semana
                     (semana_id, promotor_id, sueldo_semanal, comisiones, seguro, isn,
@@ -348,9 +473,8 @@ def generar_gastos():
                     prima_vacacional=excluded.prima_vacacional,
                     total=excluded.total
             """, (semana_id, p['id'], g['sueldo_semanal'], com, g['seguro'],
-                  g['isn'], g['impuestos'], g['gastos_indirectos'],
-                  g['fondo_contingencia'], g['aguinaldo'],
-                  g['vacaciones'], g['prima_vacacional'], g['total']))
+                  g['isn'], 0, 0, 0,
+                  g['aguinaldo'], g['vacaciones'], g['prima_vacacional'], total_final))
 
         db.commit()
         return jsonify({'ok': True, 'promotores': len(proms)})
@@ -365,18 +489,14 @@ def get_gastos(semana_id):
     db   = get_db()
     rows = ql(db.execute("""
         SELECT t.cadena, t.nombre AS tienda,
-               COUNT(gs.id)               AS promotores,
-               SUM(gs.sueldo_semanal)     AS sueldos,
-               SUM(gs.comisiones)         AS comisiones,
-               SUM(gs.seguro)             AS seguro,
-               SUM(gs.isn)                AS isn,
-               SUM(gs.impuestos)          AS impuestos,
-               SUM(gs.aguinaldo)          AS aguinaldo,
-               SUM(gs.vacaciones)         AS vacaciones,
-               SUM(gs.prima_vacacional)   AS prima_vacacional,
-               SUM(gs.gastos_indirectos)  AS gastos_indirectos,
-               SUM(gs.fondo_contingencia) AS fondo_contingencia,
-               SUM(gs.total)              AS total
+               COUNT(gs.id)             AS promotores,
+               SUM(gs.sueldo_semanal)   AS sueldos,
+               SUM(gs.comisiones)       AS comisiones,
+               SUM(gs.seguro)           AS seguro,
+               SUM(gs.aguinaldo)        AS aguinaldo,
+               SUM(gs.vacaciones)       AS vacaciones,
+               SUM(gs.prima_vacacional) AS prima_vacacional,
+               SUM(gs.total)            AS total
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
         JOIN tiendas t ON t.id = p.tienda_id
@@ -390,6 +510,12 @@ def get_gastos(semana_id):
             if k not in ('cadena', 'tienda') and v is not None:
                 try: r[k] = round(float(v), 2)
                 except: pass
+        n = int(r['promotores'])
+        r['isn']                = round(61.54 * n, 2)
+        r['impuestos']          = 417.05
+        r['gastos_indirectos']  = 274.00
+        r['fondo_contingencia'] = 27.00
+        r['total']              = round(float(r['total'] or 0) + 417.05 + 274.00 + 27.00, 2)
     return jsonify(rows)
 
 
@@ -400,14 +526,14 @@ def get_gastos_detalle(semana_id):
         SELECT gs.sueldo_semanal, gs.comisiones, gs.seguro, gs.isn,
                gs.impuestos, gs.gastos_indirectos, gs.fondo_contingencia,
                gs.aguinaldo, gs.vacaciones, gs.prima_vacacional, gs.total,
-               p.nombre AS promotor,
+               p.nombre AS promotor, p.promotor_id,
                t.nombre AS tienda,
                t.cadena
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
         JOIN tiendas t ON t.id = p.tienda_id
         WHERE gs.semana_id = ?
-        ORDER BY t.cadena, t.nombre, p.nombre
+        ORDER BY t.cadena, t.nombre, p.promotor_id
     """, (semana_id,)).fetchall())
     db.close()
     for r in rows:
@@ -437,30 +563,41 @@ def upload_telcel():
     if not f:
         return jsonify({'ok': False, 'error': 'No se recibió archivo'}), 400
     try:
-        wb      = openpyxl.load_workbook(BytesIO(f.read()), data_only=True)
-        ws      = wb.active
-        headers = [str(c.value).strip().lower() if c.value is not None else ''
-                   for c in next(ws.iter_rows(min_row=1, max_row=1))]
+        filename = f.filename.lower()
+        raw = f.read()
 
-        def col_idx(*names):
-            for n in names:
-                if n in headers: return headers.index(n)
-            return None
+        # Columnas fijas: A=Subclave, B=Concepto, C=Comisión
+        all_rows = []
+        if filename.endswith('.xls'):
+            wb_xls = xlrd.open_workbook(file_contents=raw)
+            ws_xls = wb_xls.sheet_by_index(0)
+            for i in range(ws_xls.nrows):
+                all_rows.append([ws_xls.cell_value(i, c) if c < ws_xls.ncols else None
+                                  for c in range(3)])
+        else:
+            wb = openpyxl.load_workbook(BytesIO(raw), data_only=True)
+            ws = wb.active
+            for row in ws.iter_rows(values_only=True):
+                all_rows.append(list(row[:3]))
 
-        idx_sub  = col_idx('subclave', 'fzavta', 'sub_clave', 'clave')
-        idx_prod = col_idx('producto', 'product', 'descripcion', 'descripción')
-        idx_com  = col_idx('comis', 'comision', 'comisión', 'comisiones', 'importe')
+        if not all_rows:
+            return jsonify({'ok': False, 'error': 'El archivo está vacío'}), 400
 
-        if idx_sub is None or idx_com is None:
-            return jsonify({'ok': False,
-                            'error': f'Columnas no encontradas. Encabezados detectados: {headers}'}), 400
+        # Detectar si la primera fila es encabezado (col C no numérica)
+        try:
+            float(all_rows[0][2] or 0)
+            start = 0
+        except (TypeError, ValueError):
+            start = 1
 
         rows_data = []
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            sub  = str(row[idx_sub]).strip()  if row[idx_sub]  is not None else ''
-            prod = str(row[idx_prod]).strip() if idx_prod is not None and row[idx_prod] is not None else ''
-            try:   com = float(row[idx_com] or 0)
-            except: com = 0.0
+        for row in all_rows[start:]:
+            if len(row) < 3:
+                continue
+            sub  = str(row[0]).strip() if row[0] is not None else ''
+            prod = str(row[1]).strip() if row[1] is not None else ''
+            try:   com = float(row[2] or 0)
+            except (TypeError, ValueError): com = 0.0
             if sub and sub.lower() not in ('none', 'nan', ''):
                 rows_data.append((sub, prod, com))
 
@@ -474,24 +611,124 @@ def upload_telcel():
             [(semana_id, r[0], r[1], r[2]) for r in rows_data])
         db.commit()
 
-        resumen = ql(db.execute("""
+        # Conceptos únicos en orden de aparición
+        conceptos = []
+        seen_c = set()
+        for r in rows_data:
+            c = r[1]
+            if c and c not in seen_c:
+                seen_c.add(c)
+                conceptos.append(c)
+
+        raw_rows = ql(db.execute("""
             SELECT pt.subclave,
                    COALESCE(t.nombre, 'Sin tienda asignada') AS tienda,
                    COALESCE(t.cadena, '')                    AS cadena,
-                   SUM(pt.comision)                          AS total
+                   pt.producto,
+                   SUM(pt.comision) AS subtotal
             FROM pagos_telcel pt
             LEFT JOIN subclaves_telcel st ON st.subclave = pt.subclave
             LEFT JOIN tiendas t ON t.id = st.tienda_id
             WHERE pt.semana_id = ?
-            GROUP BY pt.subclave, t.nombre, t.cadena
-            ORDER BY total DESC
+            GROUP BY pt.subclave, t.nombre, t.cadena, pt.producto
+            ORDER BY pt.subclave
         """, (semana_id,)).fetchall())
         db.close()
-        for r in resumen:
-            r['total'] = round(float(r['total'] or 0), 2)
-        return jsonify({'ok': True, 'filas': len(rows_data), 'resumen': resumen})
+
+        agrupado = {}
+        orden_sub = []
+        for row in raw_rows:
+            sub = row['subclave']
+            if sub not in agrupado:
+                agrupado[sub] = {'subclave': sub, 'tienda': row['tienda'],
+                                 'cadena': row['cadena'], 'conceptos': {}}
+                orden_sub.append(sub)
+            prod = row['producto'] or ''
+            agrupado[sub]['conceptos'][prod] = round(float(row['subtotal'] or 0), 2)
+
+        resumen = []
+        for sub in orden_sub:
+            r = agrupado[sub]
+            total = sum(r['conceptos'].values())
+            resumen.append({'subclave': r['subclave'], 'tienda': r['tienda'],
+                            'cadena': r['cadena'], 'conceptos': r['conceptos'],
+                            'total': round(total, 2)})
+
+        return jsonify({'ok': True, 'filas': len(rows_data), 'conceptos': conceptos, 'resumen': resumen})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+# ── COMISIONES ────────────────────────────────────────────────────────────────
+
+@app.route('/comisiones')
+def comisiones():
+    db = get_db()
+    semanas = ql(db.execute("SELECT * FROM semanas ORDER BY fecha_inicio DESC").fetchall())
+    db.close()
+    return render_template('comisiones.html', semanas=semanas)
+
+
+CONCEPTOS_FIJOS = ['AMIGO KIT', 'CBPC', 'CHIP EXPRESS', 'GARANTIZADA']
+
+@app.route('/api/comisiones/<int:semana_id>')
+def get_comisiones(semana_id):
+    db = get_db()
+    raw_rows = ql(db.execute("""
+        SELECT COALESCE(t.cadena,'Sin cadena')           AS cadena,
+               COALESCE(t.nombre,'Sin tienda asignada')  AS tienda,
+               COALESCE(t.clave_principal,'')            AS clave_principal,
+               pt.producto,
+               SUM(pt.comision)                          AS subtotal
+        FROM pagos_telcel pt
+        LEFT JOIN subclaves_telcel st ON st.subclave = pt.subclave
+        LEFT JOIN tiendas t ON t.id = st.tienda_id
+        WHERE pt.semana_id = ?
+        GROUP BY t.cadena, t.nombre, t.clave_principal, pt.producto
+        ORDER BY t.cadena, t.nombre
+    """, (semana_id,)).fetchall())
+    db.close()
+
+    agrupado = {}
+    orden = []
+    for row in raw_rows:
+        key = (row['cadena'], row['tienda'])
+        if key not in agrupado:
+            agrupado[key] = {'cadena': row['cadena'], 'tienda': row['tienda'],
+                             'clave_principal': row['clave_principal'], 'conceptos': {}}
+            orden.append(key)
+        prod = (row['producto'] or '').strip().upper()
+        agrupado[key]['conceptos'][prod] = round(float(row['subtotal'] or 0), 2)
+
+    rows = []
+    for key in orden:
+        r = agrupado[key]
+        rows.append({'cadena': r['cadena'], 'tienda': r['tienda'],
+                     'clave_principal': r['clave_principal'],
+                     'conceptos': r['conceptos'],
+                     'total': round(sum(r['conceptos'].values()), 2)})
+
+    # Tiendas sin comisiones esa semana
+    db2 = get_db()
+    ids_con_rows = ql(db2.execute("""
+        SELECT DISTINCT t.id FROM tiendas t
+        JOIN subclaves_telcel st ON st.tienda_id = t.id
+        JOIN pagos_telcel pt ON pt.subclave = st.subclave
+        WHERE pt.semana_id = ?
+    """, (semana_id,)).fetchall())
+    ids_con = {r['id'] for r in ids_con_rows}
+
+    todas = ql(db2.execute(
+        "SELECT id, cadena, nombre, clave_principal FROM tiendas ORDER BY cadena, nombre"
+    ).fetchall())
+    db2.close()
+
+    sin_comisiones = [
+        {'cadena': t['cadena'], 'tienda': t['nombre'], 'clave_principal': t['clave_principal'] or ''}
+        for t in todas if t['id'] not in ids_con
+    ]
+
+    return jsonify({'conceptos': CONCEPTOS_FIJOS, 'rows': rows, 'sin_comisiones': sin_comisiones})
 
 
 # ── RESUMEN ───────────────────────────────────────────────────────────────────
@@ -549,6 +786,182 @@ def get_resumen(semana_id):
     for r in out:
         r['utilidad'] = round(r['ingresos'] - r['gastos'], 2)
     return jsonify(out)
+
+
+# ── BALANCE ───────────────────────────────────────────────────────────────────
+
+@app.route('/balance')
+def balance():
+    db = get_db()
+    semanas = ql(db.execute("SELECT * FROM semanas ORDER BY fecha_inicio DESC").fetchall())
+    db.close()
+    return render_template('balance.html', semanas=semanas)
+
+
+@app.route('/api/balance/<int:semana_id>')
+def get_balance(semana_id):
+    db = get_db()
+
+    telcel_rows = ql(db.execute("""
+        SELECT UPPER(TRIM(producto)) AS producto, SUM(comision) AS total, COUNT(*) AS lineas
+        FROM pagos_telcel WHERE semana_id = ?
+        GROUP BY UPPER(TRIM(producto))
+    """, (semana_id,)).fetchall())
+
+    extra_rows = ql(db.execute("""
+        SELECT tipo, SUM(monto) AS total
+        FROM comisiones_extra WHERE semana_id = ?
+        GROUP BY tipo
+    """, (semana_id,)).fetchall())
+
+    g = q1(db.execute("""
+        SELECT COUNT(gs.id)                                       AS n_prom,
+               COUNT(DISTINCT p.tienda_id)                        AS n_tiend,
+               SUM(gs.sueldo_semanal)                             AS sueldos,
+               SUM(gs.comisiones)                                 AS comisiones,
+               SUM(CASE WHEN gs.comisiones > 0 THEN 1 ELSE 0 END) AS n_com,
+               SUM(gs.seguro)                                     AS seguro,
+               SUM(CASE WHEN gs.seguro > 0 THEN 1 ELSE 0 END)    AS n_seg,
+               SUM(gs.aguinaldo)                                  AS aguinaldo,
+               SUM(gs.vacaciones)                                 AS vacaciones,
+               SUM(CASE WHEN gs.vacaciones > 0 THEN 1 ELSE 0 END) AS n_vac,
+               SUM(gs.prima_vacacional)                           AS prima_vacacional,
+               SUM(CASE WHEN gs.prima_vacacional > 0 THEN 1 ELSE 0 END) AS n_pv
+        FROM gastos_semana gs
+        JOIN promotores p ON p.id = gs.promotor_id
+        WHERE gs.semana_id = ?
+    """, (semana_id,)).fetchone())
+    db.close()
+
+    if not g or not g['n_prom']:
+        return jsonify({'ok': False, 'error': 'Sin gastos generados para esta semana'})
+
+    np  = int(g['n_prom']  or 0)
+    nt  = int(g['n_tiend'] or 0)
+
+    telcel = {}
+    telcel_lineas = {}
+    for r in telcel_rows:
+        prod = (r['producto'] or '').strip()
+        if prod:
+            telcel[prod] = round(float(r['total'] or 0), 2)
+            telcel_lineas[prod] = int(r['lineas'] or 0)
+
+    extra = {r['tipo']: round(float(r['total'] or 0), 2) for r in extra_rows}
+
+    total_ingresos = round(sum(telcel.values()) + sum(extra.values()), 2)
+
+    sueldos = round(float(g['sueldos'] or 0), 2)
+    coms    = round(float(g['comisiones'] or 0), 2)
+    seguro  = round(float(g['seguro'] or 0), 2)
+    isn     = round(61.54  * np, 2)
+    imp     = round(417.05 * nt, 2)
+    gi      = round(274.00 * nt, 2)
+    fc      = round(27.00  * np, 2)
+    ag      = round(float(g['aguinaldo'] or 0), 2)
+    vac     = round(float(g['vacaciones'] or 0), 2)
+    pv      = round(float(g['prima_vacacional'] or 0), 2)
+
+    total_gastos   = round(sueldos + coms + seguro + isn + imp + gi + fc + ag + vac + pv, 2)
+    utilidad       = round(total_ingresos - total_gastos, 2)
+    margen         = round(utilidad / total_ingresos * 100, 1) if total_ingresos else 0.0
+
+    return jsonify({
+        'ok': True,
+        'ingresos': {'telcel': telcel, 'telcel_lineas': telcel_lineas, 'extra': extra, 'total': total_ingresos},
+        'gastos': {
+            'sueldos': sueldos,   'n_prom': np,
+            'comisiones': coms,   'n_com': int(g['n_com'] or 0),
+            'seguro': seguro,     'n_seg': int(g['n_seg'] or 0),
+            'isn': isn,
+            'impuestos': imp,     'n_tiend': nt,
+            'gastos_indirectos': gi,
+            'fondo_contingencia': fc,
+            'aguinaldo': ag,
+            'vacaciones': vac,    'n_vac': int(g['n_vac'] or 0),
+            'prima_vacacional': pv,'n_pv': int(g['n_pv'] or 0),
+            'total': total_gastos,
+        },
+        'utilidad': utilidad,
+        'margen': margen,
+    })
+
+
+# ── COMISIONES EXTRA ─────────────────────────────────────────────────────────
+
+TIPOS_COMISION_EXTRA = ['2% AP', 'Volumen Garantizado', 'Amigo Kit', 'Cadena Comercial']
+
+@app.route('/comisiones-extra')
+def comisiones_extra():
+    db = get_db()
+    semanas = ql(db.execute("SELECT * FROM semanas ORDER BY fecha_inicio DESC").fetchall())
+    db.close()
+    return render_template('comisiones_extra.html', semanas=semanas,
+                           tipos=TIPOS_COMISION_EXTRA)
+
+
+@app.route('/api/comisiones-extra/<int:semana_id>')
+def get_comisiones_extra(semana_id):
+    db = get_db()
+    rows = ql(db.execute("""
+        SELECT id, tipo, monto, notas
+        FROM comisiones_extra
+        WHERE semana_id = ?
+        ORDER BY tipo
+    """, (semana_id,)).fetchall())
+    db.close()
+    for r in rows:
+        r['monto'] = round(float(r['monto'] or 0), 2)
+    return jsonify(rows)
+
+
+@app.route('/api/comisiones-extra', methods=['POST'])
+def add_comision_extra():
+    d = request.json
+    db = get_db()
+    try:
+        cur = db.execute("""
+            INSERT INTO comisiones_extra (semana_id, tipo, monto, notas)
+            VALUES (?,?,?,?)
+        """, (int(d['semana_id']), d['tipo'].strip(),
+              float(d['monto']), (d.get('notas') or '').strip() or None))
+        db.commit()
+        return jsonify({'ok': True, 'id': cur.lastrowid})
+    except Exception as e:
+        db.rollback(); return jsonify({'ok': False, 'error': str(e)}), 400
+    finally:
+        db.close()
+
+
+@app.route('/api/comisiones-extra/<int:cid>', methods=['PUT'])
+def edit_comision_extra(cid):
+    d = request.json
+    db = get_db()
+    try:
+        db.execute("""
+            UPDATE comisiones_extra SET tipo=?, monto=?, notas=?
+            WHERE id=?
+        """, (d['tipo'].strip(), float(d['monto']),
+              (d.get('notas') or '').strip() or None, cid))
+        db.commit()
+        return jsonify({'ok': True})
+    except Exception as e:
+        db.rollback(); return jsonify({'ok': False, 'error': str(e)}), 400
+    finally:
+        db.close()
+
+
+@app.route('/api/comisiones-extra/<int:cid>', methods=['DELETE'])
+def del_comision_extra(cid):
+    db = get_db()
+    try:
+        db.execute("DELETE FROM comisiones_extra WHERE id=?", (cid,))
+        db.commit()
+        return jsonify({'ok': True})
+    except Exception as e:
+        db.rollback(); return jsonify({'ok': False, 'error': str(e)}), 400
+    finally:
+        db.close()
 
 
 @app.route('/')

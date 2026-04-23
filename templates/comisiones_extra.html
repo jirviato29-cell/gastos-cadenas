@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comisiones Extra — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+.main{padding:16px;max-width:900px;margin:0 auto;}
+select{width:auto;min-width:280px;}
+th:last-child{text-align:right;}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+tfoot td:last-child{text-align:right;}
+.frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
+.frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
+.b1{background:#DBEAFE;color:#1E40AF;}
+.b2{background:#DCFCE7;color:#166534;}
+.b3{background:#FEF9C3;color:#92400E;}
+.b4{background:#F3E8FF;color:#6B21A8;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
+    <a href="/gastos">Gastos</a>
+    <a href="/comisiones">Comisiones</a>
+    <a href="/comisiones-extra" class="active">Comisiones Extra</a>
+    <a href="/telcel">Telcel</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/promotores">Promotores</a>
+    <a href="/resumen">Resumen</a>
+  </nav>
+</div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><span class="print-empresa">GASTOS CADENAS</span></div>
+<div class="main">
+
+  <div class="card">
+    <h2>Comisiones Extra</h2>
+    <div class="filtros">
+      <div>
+        <label>Semana</label>
+        <select id="sel-semana" onchange="cargar()">
+          <option value="">— Selecciona semana —</option>
+          {% for s in semanas %}
+          <option value="{{ s.id }}">{{ s.fecha_inicio }} → {{ s.fecha_fin }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button class="btn btn-verde" onclick="abrirModal()">+ Agregar</button>
+      </div>
+    </div>
+    <div id="msg" class="msg"></div>
+    <div id="tabla-wrap"><div class="empty">Selecciona una semana para ver las comisiones extra.</div></div>
+  </div>
+
+</div>
+
+<!-- Modal agregar/editar -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-titulo">Nueva Comisión Extra</h3>
+    <div class="frow">
+      <label>Tipo de comisión</label>
+      <select id="f-tipo">
+        {% for t in tipos %}
+        <option value="{{ t }}">{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="frow">
+      <label>Monto</label>
+      <input type="number" id="f-monto" step="0.01" min="0" placeholder="0.00">
+    </div>
+    <div class="frow">
+      <label>Notas (opcional)</label>
+      <input type="text" id="f-notas" placeholder="Observaciones...">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-gris" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-azul" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BADGE = {'2% AP':'b1','Volumen Garantizado':'b2','Amigo Kit':'b3','Cadena Comercial':'b4'};
+let datos = [], editId = null;
+
+function f$(n){ return n == null ? '$0.00' : '$' + parseFloat(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function semanaId(){ return parseInt(document.getElementById('sel-semana').value) || 0; }
+
+async function cargar(){
+  const sid = semanaId();
+  const wrap = document.getElementById('tabla-wrap');
+  if(!sid){ wrap.innerHTML = '<div class="empty">Selecciona una semana para ver las comisiones extra.</div>'; return; }
+  const r = await fetch(`/api/comisiones-extra/${sid}`);
+  datos = await r.json();
+  renderTabla();
+}
+
+function renderTabla(){
+  const wrap = document.getElementById('tabla-wrap');
+  if(!datos.length){
+    wrap.innerHTML = '<div class="empty">Sin comisiones extra para esta semana. Usa "+ Agregar" para registrar.</div>';
+    return;
+  }
+  const total = datos.reduce((s,r) => s + (r.monto||0), 0);
+  let html = `<table>
+    <thead><tr>
+      <th>Tipo</th>
+      <th style="text-align:right">Monto</th><th>Notas</th>
+      <th colspan="2" style="text-align:center">Acciones</th>
+    </tr></thead><tbody>`;
+  datos.forEach(r => {
+    const bc = BADGE[r.tipo] || 'b1';
+    html += `<tr>
+      <td><span class="badge ${bc}">${r.tipo}</span></td>
+      <td style="text-align:right">${f$(r.monto)}</td>
+      <td style="color:#666;font-weight:400">${r.notas || ''}</td>
+      <td><button class="btn btn-gris" onclick="editar(${r.id})">Editar</button></td>
+      <td><button class="btn btn-rojo" onclick="borrar(${r.id})">Borrar</button></td>
+    </tr>`;
+  });
+  html += `</tbody><tfoot><tr>
+    <td>TOTAL</td>
+    <td>${f$(total)}</td>
+    <td colspan="3"></td>
+  </tr></tfoot></table>`;
+  wrap.innerHTML = html;
+}
+
+function abrirModal(id){
+  editId = id || null;
+  document.getElementById('modal-titulo').textContent = id ? 'Editar Comisión Extra' : 'Nueva Comisión Extra';
+  if(id){
+    const r = datos.find(x => x.id === id);
+    document.getElementById('f-tipo').value  = r.tipo;
+    document.getElementById('f-monto').value = r.monto;
+    document.getElementById('f-notas').value = r.notas || '';
+  } else {
+    document.getElementById('f-tipo').selectedIndex = 0;
+    document.getElementById('f-monto').value = '';
+    document.getElementById('f-notas').value = '';
+  }
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function cerrarModal(){ document.getElementById('modal-bg').classList.remove('show'); }
+
+function editar(id){ abrirModal(id); }
+
+async function guardar(){
+  const monto = parseFloat(document.getElementById('f-monto').value);
+  if(!monto || monto <= 0){ showMsg('Ingresa un monto válido.', false); return; }
+
+  const body = {
+    semana_id: semanaId(),
+    tipo:  document.getElementById('f-tipo').value,
+    monto: monto,
+    notas: document.getElementById('f-notas').value,
+  };
+
+  const url    = editId ? `/api/comisiones-extra/${editId}` : '/api/comisiones-extra';
+  const method = editId ? 'PUT' : 'POST';
+  const res  = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const data = await res.json();
+
+  if(data.ok){
+    cerrarModal();
+    await cargar();
+    showMsg(editId ? 'Comisión actualizada.' : 'Comisión agregada.', true);
+  } else {
+    showMsg('Error: ' + data.error, false);
+  }
+}
+
+async function borrar(id){
+  if(!confirm('¿Eliminar esta comisión extra?')) return;
+  const res  = await fetch(`/api/comisiones-extra/${id}`, {method:'DELETE'});
+  const data = await res.json();
+  if(data.ok){ await cargar(); showMsg('Comisión eliminada.', true); }
+  else showMsg('Error: ' + data.error, false);
+}
+
+function showMsg(txt, ok){
+  const el = document.getElementById('msg');
+  el.textContent = txt;
+  el.className   = 'msg ' + (ok ? 'msg-ok' : 'msg-err');
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+document.getElementById('modal-bg').addEventListener('click', e => {
+  if(e.target === document.getElementById('modal-bg')) cerrarModal();
+});
+</script>
+</body>
+</html>

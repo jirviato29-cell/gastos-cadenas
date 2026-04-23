@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comisiones — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+.main{padding:16px;max-width:1200px;margin:0 auto;}
+select{width:auto;}
+.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end;}
+.filtros>div{display:flex;flex-direction:column;gap:4px;}
+.filtros select{min-width:180px;}
+th{text-align:right;}
+th:first-child,th:nth-child(2),th:nth-child(3){text-align:left;}
+td{text-align:right;white-space:nowrap;}
+td:first-child,td:nth-child(2),td:nth-child(3){text-align:left;}
+tfoot td{text-align:right;}
+.sin-tienda{color:#DC2626;font-size:11px;}
+.stat-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.stat-card{flex:1;min-width:90px;background:#F5F7FA;border:1px solid #E8EDF5;border-radius:10px;padding:12px 14px;text-align:center;box-shadow:0 1px 4px rgba(0,28,75,.05);}
+.stat-card .l{font-size:10px;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;}
+.stat-card .n{font-size:18px;font-weight:700;color:#002855;}
+.stat-card.total{background:#002855;border-color:#002855;}
+.stat-card.total .l{color:rgba(255,255,255,.65);}
+.stat-card.total .n{font-size:22px;color:#fff;}
+.stat-card.sin .n{color:#DC2626;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
+    <a href="/gastos">Gastos</a>
+    <a href="/comisiones" class="active">Comisiones</a>
+    <a href="/comisiones-extra">Comisiones Extra</a>
+    <a href="/telcel">Telcel</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/promotores">Promotores</a>
+    <a href="/resumen">Resumen</a>
+  </nav>
+</div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-info">Comisiones</div></div></div>
+<div class="main">
+
+  <div class="card">
+    <h2>Comisiones guardadas — <span id="lbl-semana" style="font-weight:400;color:#555;">selecciona una semana</span></h2>
+    <div style="margin-bottom:14px;">
+      <label>Semana</label>
+      <select id="sel-semana" style="min-width:300px;" onchange="cargarTabla()">
+        <option value="">— Selecciona semana —</option>
+        {% for s in semanas %}
+        <option value="{{ s.id }}">{{ s.fecha_inicio }} al {{ s.fecha_fin }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filtros">
+      <div>
+        <label>Cadena</label>
+        <select id="fil-cadena" onchange="filtrar()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div>
+        <label>Tienda</label>
+        <select id="fil-tienda" onchange="filtrar()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div style="align-self:flex-end;">
+        <button class="btn" style="background:#EEF2F7;border:1px solid #D0D9E8;color:#444;padding:8px 14px;" onclick="limpiarFiltros()">Limpiar filtros</button>
+      </div>
+    </div>
+
+    <!-- Panel de contadores: una fila entre filtros y tabla -->
+    <div class="stat-row" id="counter" style="display:none;">
+      <div class="stat-card"><div class="l">AMIGO KIT</div><div class="n" id="cnt-amigokit">$0</div></div>
+      <div class="stat-card"><div class="l">CBPC</div><div class="n" id="cnt-cbpc">$0</div></div>
+      <div class="stat-card"><div class="l">CHIP EXPRESS</div><div class="n" id="cnt-chipexpress">$0</div></div>
+      <div class="stat-card"><div class="l">GARANTIZADA</div><div class="n" id="cnt-garantizada">$0</div></div>
+      <div class="stat-card total"><div class="l">TOTAL</div><div class="n" id="cnt-total">$0</div></div>
+      <div class="stat-card"><div class="l">Con comisiones</div><div class="n" id="cnt-con">0</div></div>
+      <div class="stat-card sin"><div class="l">Sin comisiones</div><div class="n" id="cnt-sin">0</div></div>
+    </div>
+
+    <div class="spinner" id="spinner">Cargando...</div>
+    <div class="no-print" style="display:flex;justify-content:flex-end;margin:8px 0 4px;">
+      <button onclick="window.print()" style="background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">🖨 Imprimir PDF</button>
+    </div>
+    <div style="overflow-x:auto;" id="tabla-wrap">
+      <div class="empty">Selecciona una semana para ver las comisiones</div>
+    </div>
+  </div>
+
+</div>
+<script>
+let datosCompletos = { conceptos: [], rows: [] };
+
+// ── Cargar tabla desde DB ──
+async function cargarTabla() {
+  const sid = document.getElementById('sel-semana').value;
+  const sel = document.getElementById('sel-semana');
+  const lbl = sel.options[sel.selectedIndex]?.text || '';
+  document.getElementById('lbl-semana').textContent = sid ? lbl : 'selecciona una semana';
+
+  if (!sid) {
+    document.getElementById('tabla-wrap').innerHTML = '<div class="empty">Selecciona una semana para ver las comisiones</div>';
+    document.getElementById('counter').style.display = 'none';
+    datosCompletos = { conceptos: [], rows: [] };
+    return;
+  }
+
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('tabla-wrap').innerHTML = '';
+
+  try {
+    const r = await fetch(`/api/comisiones/${sid}`);
+    const d = await r.json();
+    document.getElementById('spinner').style.display = 'none';
+    datosCompletos = d;
+
+    if (!d.rows.length) {
+      document.getElementById('tabla-wrap').innerHTML = '<div class="empty">Sin comisiones para esta semana. Sube el archivo en la página Telcel.</div>';
+      poblarFiltros([]);
+      return;
+    }
+    poblarFiltros(d.rows);
+    renderTabla(d.rows, d.conceptos);
+  } catch(e) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('tabla-wrap').innerHTML = `<div class="empty">Error al cargar: ${e.message}</div>`;
+  }
+}
+
+// ── Filtros ──
+function poblarFiltros(rows) {
+  const cadenas = [...new Set(rows.map(r => r.cadena).filter(c => c && c !== 'Sin cadena'))].sort();
+  const tiendas = [...new Set(rows.map(r => r.tienda).filter(t => t && t !== 'Sin tienda asignada'))].sort();
+
+  const fc = document.getElementById('fil-cadena');
+  const ft = document.getElementById('fil-tienda');
+  const selC = fc.value;
+  const selT = ft.value;
+
+  fc.innerHTML = '<option value="">Todas</option>' + cadenas.map(c => `<option value="${c}">${c}</option>`).join('');
+  ft.innerHTML = '<option value="">Todas</option>' + tiendas.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  if (cadenas.includes(selC)) fc.value = selC;
+  if (tiendas.includes(selT)) ft.value = selT;
+}
+
+function filtrar() {
+  const cadena = document.getElementById('fil-cadena').value;
+  const tienda = document.getElementById('fil-tienda').value;
+  let rows = datosCompletos.rows;
+  if (cadena) rows = rows.filter(r => r.cadena === cadena);
+  if (tienda) rows = rows.filter(r => r.tienda === tienda);
+  renderTabla(rows, datosCompletos.conceptos);
+}
+
+function limpiarFiltros() {
+  document.getElementById('fil-cadena').value = '';
+  document.getElementById('fil-tienda').value = '';
+  filtrar();
+}
+
+// ── Contadores ──
+function actualizarCounter(rows, conceptos, sinComisiones) {
+  const totCol = {};
+  conceptos.forEach(c => { totCol[c] = 0; });
+  let totalGen = 0;
+  rows.forEach(r => {
+    totalGen += r.total;
+    conceptos.forEach(c => { totCol[c] += r.conceptos[c.toUpperCase()] || r.conceptos[c] || 0; });
+  });
+
+  document.getElementById('cnt-amigokit').textContent    = fT(totCol['AMIGO KIT']   || 0);
+  document.getElementById('cnt-cbpc').textContent        = fT(totCol['CBPC']         || 0);
+  document.getElementById('cnt-chipexpress').textContent = fT(totCol['CHIP EXPRESS'] || 0);
+  document.getElementById('cnt-garantizada').textContent = fT(totCol['GARANTIZADA']  || 0);
+  document.getElementById('cnt-total').textContent       = fT(totalGen);
+  document.getElementById('cnt-con').textContent         = rows.length;
+  document.getElementById('cnt-sin').textContent         = (sinComisiones || []).length;
+  document.getElementById('counter').style.display       = 'flex';
+}
+
+// ── Render tabla ──
+const f$ = n => parseFloat(n||0) === 0 ? '' :
+  '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fT = n => '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function renderTabla(rows, conceptos) {
+  if (!rows.length) {
+    document.getElementById('tabla-wrap').innerHTML = '<div class="empty">Sin resultados para los filtros seleccionados.</div>';
+    return;
+  }
+
+  // Encabezado fijo: Cadena | Tienda | Clave Principal | ...conceptos | Total
+  let head = '<thead><tr><th>Cadena</th><th>Tienda</th><th>Clave Principal</th>';
+  conceptos.forEach(c => { head += `<th>${c}</th>`; });
+  head += '<th>Total</th></tr></thead>';
+
+  // Cuerpo
+  const totCol = {};
+  conceptos.forEach(c => { totCol[c] = 0; });
+  let totalGen = 0;
+
+  let body = '<tbody>';
+  rows.forEach(r => {
+    totalGen += r.total;
+    const tLbl = r.tienda === 'Sin tienda asignada'
+      ? '<span class="sin-tienda">Sin tienda asignada</span>' : r.tienda;
+    body += `<tr><td>${r.cadena||''}</td><td>${tLbl}</td><td style="font-family:monospace;font-size:11px;">${r.clave_principal||''}</td>`;
+    conceptos.forEach(c => {
+      const v = r.conceptos[c.toUpperCase()] || r.conceptos[c] || 0;
+      totCol[c] += v;
+      body += `<td>${f$(v)}</td>`;
+    });
+    body += `<td style="font-weight:700;">${fT(r.total)}</td></tr>`;
+  });
+  body += '</tbody>';
+
+  // Pie
+  let foot = `<tfoot><tr><td colspan="3">TOTAL</td>`;
+  conceptos.forEach(c => { foot += `<td>${fT(totCol[c])}</td>`; });
+  foot += `<td>${fT(totalGen)}</td></tr></tfoot>`;
+
+  document.getElementById('tabla-wrap').innerHTML = `<table>${head}${body}${foot}</table>`
+    + renderSinComisiones(datosCompletos.sin_comisiones || [], conceptos.length);
+  actualizarCounter(rows, conceptos, datosCompletos.sin_comisiones);
+}
+
+function renderSinComisiones(lista, numConceptos) {
+  if (!lista.length) return '';
+  const cols = 3 + numConceptos + 1;
+  let html = `<div style="margin-top:18px;">
+    <div style="font-size:13px;font-weight:700;color:#E74C3C;margin-bottom:8px;">
+      Tiendas sin comisiones (${lista.length})
+    </div>
+    <table>
+      <thead><tr style="background:#C0392B;">
+        <th>Cadena</th><th>Tienda</th><th>Clave Principal</th>`;
+  for (let i = 0; i < numConceptos; i++) html += '<th>—</th>';
+  html += `<th>$0</th></tr></thead><tbody>`;
+  lista.forEach(t => {
+    html += `<tr style="opacity:.7;">
+      <td>${t.cadena||''}</td>
+      <td>${t.tienda}</td>
+      <td style="font-family:monospace;font-size:11px;">${t.clave_principal||''}</td>`;
+    for (let i = 0; i < numConceptos; i++) html += '<td></td>';
+    html += `<td style="color:#aaa;">$0.00</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+// Carga inicial si hay semana preseleccionada
+if (document.getElementById('sel-semana').value) cargarTabla();
+
+// Fecha en logo de impresión
+(function(){
+  const d = new Date();
+  const f = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+  const el = document.getElementById('print-info');
+  if (el) el.textContent = 'Comisiones — ' + f;
+})();
+</script>
+</body>
+</html>

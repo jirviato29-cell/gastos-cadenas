@@ -3,74 +3,67 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Promotores — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
-body{background:#EEF2F7;color:#1A1A1A;}
-.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.topbar h1{font-size:15px;font-weight:700;}
-nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
-nav a:hover,nav a.active{opacity:1;font-weight:700;}
 .main{padding:16px;max-width:1200px;margin:0 auto;}
-.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
-h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
-label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
-input,select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
-input:focus,select:focus{outline:none;border-color:#1a5276;}
-.btn{padding:8px 16px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;}
-.btn:hover{opacity:.85;}
-.btn-azul{background:#1a5276;color:#fff;}
-.btn-gris{background:#EEF2F7;color:#444;border:1px solid #D0D9E8;}
-.btn-edit{background:#FEF9E7;border:1px solid #F39C12;color:#7D6608;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
-.btn-del{background:#FADBD8;border:1px solid #E74C3C;color:#7B241C;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:700;}
-.search{padding:7px 11px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;width:260px;margin-bottom:10px;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:#1a5276;color:#fff;padding:8px 6px;text-align:center;white-space:nowrap;}
-th:first-child{text-align:left;padding-left:10px;}
-td{padding:6px 6px;text-align:center;border-bottom:1px solid #F0F4F9;}
-td:first-child{text-align:left;padding-left:10px;font-weight:600;}
-tr:hover td{background:#F5F8FC;}
-.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;}
-.badge-verde{background:#D5F5E3;color:#1A5C2A;}
-.badge-rojo{background:#FADBD8;color:#7B241C;}
-.badge-azul{background:#D6EAF8;color:#1a5276;}
-.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
-.modal-bg.show{display:flex;}
-.modal{background:#fff;border-radius:12px;padding:22px;width:440px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
-.modal h3{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:14px;}
-.frow{margin-bottom:10px;}
+input,select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
+.search{width:260px;margin-bottom:10px;}
+th{text-align:center;}
+th:first-child{text-align:left;}
+td{text-align:center;border-bottom:1px solid #EEF2F9;}
+td:first-child{text-align:left;font-weight:600;color:#002855;}
+.badge-verde{background:#DCFCE7;color:#166534;}
+.badge-rojo{background:#FEE2E2;color:#991B1B;}
+.badge-azul{background:#DBEAFE;color:#1E40AF;}
 .frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.btns{display:flex;gap:8px;margin-top:14px;}
+.frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
+.frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
 .check-row{display:flex;align-items:center;gap:8px;margin-top:6px;}
-.check-row input[type=checkbox]{width:auto;accent-color:#1a5276;}
-.conf{font-size:12px;font-weight:700;color:#27AE60;padding:4px 0;display:none;}
+.check-row input[type=checkbox]{width:auto;accent-color:#FF6B00;}
+.conf{font-size:12px;font-weight:700;color:#16A34A;padding:4px 0;display:none;}
+.drop-zone{border:2.5px dashed #A3BBDF;border-radius:10px;padding:28px;text-align:center;color:#94A3B8;cursor:pointer;transition:border-color .2s,background .2s;margin:12px 0;}
+.drop-zone:hover,.drop-zone.over{border-color:#FF6B00;background:#FFF8F5;}
+.drop-zone input[type=file]{display:none;}
+.result-imp{border-radius:8px;padding:12px;margin-top:10px;font-size:12px;display:none;}
+.result-ok{background:#DCFCE7;border:1.5px solid #16A34A;color:#14532D;}
+.result-err{background:#FEE2E2;border:1.5px solid #F87171;color:#7F1D1D;}
+.modal{width:480px;max-height:90vh;}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>GASTOS CADENAS</h1>
-  <nav>
-    <a href="/promotores" class="active">Promotores</a>
-    <a href="/tiendas">Tiendas</a>
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
+    <a href="/comisiones">Comisiones</a>
+    <a href="/comisiones-extra">Comisiones Extra</a>
     <a href="/telcel">Telcel</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/promotores" class="active">Promotores</a>
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-info"></div></div></div>
 <div class="main">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
       <h2 style="margin:0;">Promotores ({{ promotores|length }})</h2>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="text" class="search" placeholder="Buscar..." oninput="filtrar(this.value)">
-        <button class="btn btn-azul" onclick="abrirModal()">+ Agregar</button>
+        <input type="text" class="search no-print" placeholder="Buscar..." oninput="filtrar(this.value)">
+        <button class="btn no-print" onclick="window.print()" style="background:#FF6B00;color:#fff;">🖨 Imprimir PDF</button>
+        <button class="btn btn-azul no-print" onclick="abrirModal()">+ Agregar</button>
+        <button class="btn btn-gris no-print" onclick="abrirImportar()">&#8593; Importar Excel</button>
       </div>
     </div>
     <div style="overflow-x:auto;">
     <table id="tabla">
       <thead><tr>
-        <th>Nombre</th>
+        <th>ID</th>
         <th>Cadena / Tienda</th>
-        <th>Sueldo mensual</th>
         <th>Sueldo semanal</th>
         <th>Antigüedad</th>
         <th>Días vac/ley</th>
@@ -81,14 +74,13 @@ tr:hover td{background:#F5F8FC;}
       <tbody>
       {% for p in promotores %}
       <tr data-nombre="{{ p.nombre|lower }}" data-tienda="{{ (p.tienda_nombre or '')|lower }}">
-        <td>{{ p.nombre }}</td>
+        <td>{{ p.promotor_id or p.id }}</td>
         <td style="font-size:11px;">
           {% if p.tienda_nombre %}
             <div style="font-weight:700;">{{ p.cadena }}</div>
             <div style="color:#666;">{{ p.tienda_nombre }}</div>
           {% else %}<span style="color:#aaa;">Sin tienda</span>{% endif %}
         </td>
-        <td>${{ "%.2f"|format(p.sueldo) }}</td>
         <td>${{ "%.2f"|format(p.sueldo_semanal) }}</td>
         <td>{{ p.anos }} años</td>
         <td>{{ p.dias_vac }} días</td>
@@ -142,13 +134,37 @@ tr:hover td{background:#F5F8FC;}
     </div>
   </div>
   <div id="preview" style="background:#EEF2F7;border-radius:8px;padding:10px;font-size:12px;display:none;margin-bottom:8px;">
-    <strong style="color:#1a5276;">Vista previa de gastos semanales:</strong>
+    <strong style="color:#002855;">Vista previa de gastos semanales:</strong>
     <div id="preview-content" style="margin-top:6px;line-height:1.8;"></div>
   </div>
   <div class="btns">
     <button class="btn btn-azul" onclick="guardar()">Guardar</button>
     <button class="btn btn-gris" onclick="cerrar()">Cancelar</button>
   </div>
+</div>
+</div>
+
+<!-- Modal importar Excel -->
+<div class="modal-bg" id="modal-imp-bg">
+<div class="modal" style="width:480px;">
+  <h3>Importar promotores desde Excel</h3>
+  <p style="font-size:11px;color:#888;margin-bottom:4px;">
+    Columnas: <strong>B=Cadena · C=Tienda · D=ID corto · E=CLAVE (ID completo, ej: C10-CAROLINA) · F=Nombre · K=Sueldo</strong><br>
+    La primera fila es encabezado y se ignora.
+  </p>
+  <div class="drop-zone" id="imp-drop" onclick="document.getElementById('imp-file').click()"
+       ondragover="impDz(event,'over')" ondragleave="impDz(event,'')" ondrop="impDrop(event)">
+    <input type="file" id="imp-file" accept=".xlsx,.xls" onchange="impSel(this.files[0])">
+    <div style="font-size:28px;margin-bottom:6px;">📋</div>
+    <div id="imp-label">Arrastra el archivo o haz clic para seleccionar</div>
+    <div style="font-size:11px;color:#aaa;margin-top:4px;" id="imp-sub">Formatos: .xlsx, .xls</div>
+  </div>
+  <div class="btns">
+    <button class="btn btn-azul" id="imp-btn" onclick="impSubir()" disabled>Subir e importar</button>
+    <button class="btn btn-gris" onclick="cerrarImportar()">Cancelar</button>
+  </div>
+  <div id="imp-prog" style="display:none;font-size:13px;color:#002855;padding:8px 0;">Importando...</div>
+  <div class="result-imp" id="imp-result"></div>
 </div>
 </div>
 
@@ -241,6 +257,92 @@ function filtrar(q) {
 
 function cerrar() { document.getElementById('modal-bg').classList.remove('show'); }
 document.getElementById('modal-bg').addEventListener('click', e => { if(e.target===e.currentTarget) cerrar(); });
+
+// ── Importar Excel ──
+let impArchivo = null;
+
+function abrirImportar() {
+  impArchivo = null;
+  document.getElementById('imp-label').textContent = 'Arrastra el archivo o haz clic para seleccionar';
+  document.getElementById('imp-sub').textContent = 'Formatos: .xlsx, .xls';
+  document.getElementById('imp-file').value = '';
+  document.getElementById('imp-btn').disabled = true;
+  document.getElementById('imp-result').style.display = 'none';
+  document.getElementById('imp-prog').style.display = 'none';
+  document.getElementById('modal-imp-bg').classList.add('show');
+}
+function cerrarImportar() { document.getElementById('modal-imp-bg').classList.remove('show'); }
+document.getElementById('modal-imp-bg').addEventListener('click', e => { if(e.target===e.currentTarget) cerrarImportar(); });
+
+function impDz(e, cls) {
+  e.preventDefault();
+  document.getElementById('imp-drop').classList.toggle('over', cls === 'over');
+}
+function impDrop(e) {
+  e.preventDefault();
+  document.getElementById('imp-drop').classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) impSel(f);
+}
+function impSel(f) {
+  if (!f) return;
+  impArchivo = f;
+  document.getElementById('imp-label').textContent = '📄 ' + f.name;
+  document.getElementById('imp-sub').textContent = (f.size/1024).toFixed(1) + ' KB';
+  document.getElementById('imp-btn').disabled = false;
+  document.getElementById('imp-result').style.display = 'none';
+}
+
+async function impSubir() {
+  if (!impArchivo) return;
+  document.getElementById('imp-btn').disabled = true;
+  document.getElementById('imp-prog').style.display = 'block';
+  document.getElementById('imp-result').style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('archivo', impArchivo);
+
+  try {
+    const r = await fetch('/api/promotores/importar', {method:'POST', body:fd});
+    const d = await r.json();
+    const box = document.getElementById('imp-result');
+    if (d.ok) {
+      box.className = 'result-imp result-ok';
+      let html = `<strong>Importación completada</strong><br>
+        Insertados: <b>${d.insertados}</b> &nbsp;|&nbsp;
+        Actualizados: <b>${d.actualizados}</b> &nbsp;|&nbsp;
+        Errores: <b>${d.errores}</b>`;
+      if (d.errores_detalle && d.errores_detalle.length) {
+        html += '<br><br><strong>Detalle de errores:</strong><br>' +
+          d.errores_detalle.map(e => `• ${e}`).join('<br>');
+      }
+      box.innerHTML = html;
+      box.style.display = 'block';
+      if (d.insertados > 0 || d.actualizados > 0) {
+        setTimeout(() => location.reload(), 1800);
+      }
+    } else {
+      box.className = 'result-imp result-err';
+      box.innerHTML = 'Error: ' + d.error;
+      box.style.display = 'block';
+    }
+  } catch(e) {
+    const box = document.getElementById('imp-result');
+    box.className = 'result-imp result-err';
+    box.innerHTML = 'Error de conexión: ' + e.message;
+    box.style.display = 'block';
+  } finally {
+    document.getElementById('imp-btn').disabled = false;
+    document.getElementById('imp-prog').style.display = 'none';
+  }
+}
+
+(function(){
+  const d = new Date();
+  const f = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+  const el = document.getElementById('print-info');
+  if (el) el.textContent = 'Promotores — ' + f;
+})();
 </script>
 </body>
 </html>

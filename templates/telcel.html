@@ -3,55 +3,42 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Telcel — Gastos Cadenas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}
-body{background:#EEF2F7;color:#1A1A1A;}
-.topbar{background:#1a5276;color:#fff;padding:11px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.topbar h1{font-size:15px;font-weight:700;}
-nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:13px;opacity:.75;}
-nav a:hover,nav a.active{opacity:1;font-weight:700;}
 .main{padding:16px;max-width:900px;margin:0 auto;}
-.card{background:#fff;border:1px solid #D8E2F0;border-radius:10px;padding:16px;margin-bottom:14px;}
-h2{font-size:14px;font-weight:700;color:#1a5276;margin-bottom:12px;}
-label{display:block;font-size:11px;color:#555;margin-bottom:4px;font-weight:700;text-transform:uppercase;}
-input,select{width:100%;padding:8px 10px;border:1.5px solid #D0D9E8;border-radius:7px;font-size:13px;background:#fff;}
-input:focus,select:focus{outline:none;border-color:#1a5276;}
-.btn{padding:9px 20px;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;transition:opacity .15s;}
-.btn:hover{opacity:.85;}
-.btn-azul{background:#1a5276;color:#fff;}
-.btn:disabled{background:#C5D0E0;cursor:not-allowed;opacity:1;}
-.drop-zone{border:2.5px dashed #A3BBDF;border-radius:10px;padding:36px;text-align:center;color:#888;cursor:pointer;transition:border-color .2s,background .2s;margin:12px 0;}
-.drop-zone:hover,.drop-zone.over{border-color:#1a5276;background:#EEF2F7;}
+select{width:auto;}
+.drop-zone{border:2.5px dashed #A3BBDF;border-radius:10px;padding:36px;text-align:center;color:#94A3B8;cursor:pointer;transition:border-color .2s,background .2s;margin:12px 0;}
+.drop-zone:hover,.drop-zone.over{border-color:#FF6B00;background:#FFF8F5;}
 .drop-zone input[type=file]{display:none;}
 .drop-zone .icon{font-size:36px;margin-bottom:8px;}
 .drop-zone .sub{font-size:12px;margin-top:4px;}
 .result-box{border-radius:10px;padding:14px;margin-top:12px;display:none;}
-.result-ok{background:#D5F5E3;border:1.5px solid #27AE60;color:#1A5C2A;}
-.result-err{background:#FADBD8;border:1.5px solid #E74C3C;color:#7B241C;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:#1a5276;color:#fff;padding:7px 8px;text-align:left;white-space:nowrap;}
+.result-ok{background:#DCFCE7;border:1.5px solid #16A34A;color:#14532D;}
+.result-err{background:#FEE2E2;border:1.5px solid #F87171;color:#7F1D1D;}
+.prog{display:none;text-align:center;padding:16px;color:#002855;font-size:13px;}
 th:last-child{text-align:right;}
-td{padding:6px 8px;border-bottom:1px solid #F0F4F9;}
-td:last-child{text-align:right;font-weight:600;}
-tr:hover td{background:#F5F8FC;}
-tfoot td{background:#EEF2F7;font-weight:700;border-top:2px solid #1a5276;}
-.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
-.badge-verde{background:#D5F5E3;color:#1A5C2A;}
-.badge-gris{background:#F0F4F9;color:#666;}
-.prog{display:none;text-align:center;padding:16px;color:#1a5276;font-size:13px;}
+td:last-child{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;}
+tfoot td{background:#EEF2F7;color:#1A202C;font-weight:700;border-top:2px solid #002855;}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>GASTOS CADENAS</h1>
-  <nav>
-    <a href="/promotores">Promotores</a>
-    <a href="/tiendas">Tiendas</a>
+  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
+  <h1 class="topbar-title">GASTOS CADENAS</h1>
+    <nav>
+    <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
+    <a href="/comisiones">Comisiones</a>
+    <a href="/comisiones-extra">Comisiones Extra</a>
     <a href="/telcel" class="active">Telcel</a>
+    <a href="/tiendas">Tiendas</a>
+    <a href="/promotores">Promotores</a>
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
+<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><span class="print-empresa">GASTOS CADENAS</span></div>
 <div class="main">
   <div class="card">
     <h2>Cargar comisiones Telcel (.xlsx)</h2>
@@ -89,9 +76,9 @@ tfoot td{background:#EEF2F7;font-weight:700;border-top:2px solid #1a5276;}
     <h2>Resumen por subclave — <span id="tbl-semana-lbl"></span></h2>
     <div style="overflow-x:auto;">
     <table id="tbl-result">
-      <thead><tr><th>Subclave</th><th>Tienda</th><th>Cadena</th><th>Total comisión</th></tr></thead>
+      <thead id="tbl-head"></thead>
       <tbody id="tbl-body"></tbody>
-      <tfoot><tr><td colspan="3"><strong>TOTAL</strong></td><td id="tbl-total"></td></tr></tfoot>
+      <tfoot id="tbl-foot"></tfoot>
     </table>
     </div>
   </div>
@@ -153,7 +140,7 @@ async function subir() {
       box.className = 'result-box result-ok';
       box.innerHTML = `✅ Archivo procesado — <strong>${d.filas}</strong> filas importadas.`;
       box.style.display = 'block';
-      mostrarTabla(d.resumen, sid);
+      mostrarTabla(d.resumen, d.conceptos, sid);
     } else {
       box.className = 'result-box result-err';
       box.innerHTML = '❌ Error: ' + d.error;
@@ -170,27 +157,48 @@ async function subir() {
   }
 }
 
-function mostrarTabla(resumen, sid) {
+function mostrarTabla(resumen, conceptos, sid) {
   const sel = document.getElementById('sel-semana');
   const lbl = sel.options[sel.selectedIndex]?.text || '';
   document.getElementById('tbl-semana-lbl').textContent = lbl;
-  const f$ = n => '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
-  let total = 0;
-  let html = '';
+  const f$ = n => parseFloat(n||0) === 0 ? '' :
+    '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fT = n => '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // Encabezado dinámico
+  const colSpanFijo = 3;
+  let headHtml = '<tr><th>Subclave</th><th>Tienda</th><th>Cadena</th>';
+  conceptos.forEach(c => { headHtml += `<th>${c}</th>`; });
+  headHtml += '<th>Total</th></tr>';
+  document.getElementById('tbl-head').innerHTML = headHtml;
+
+  // Totales por columna
+  const totConceptos = {};
+  conceptos.forEach(c => { totConceptos[c] = 0; });
+  let totalGeneral = 0;
+
+  let bodyHtml = '';
   resumen.forEach(r => {
-    total += r.total;
+    totalGeneral += r.total;
     const tiendaLbl = r.tienda === 'Sin tienda asignada'
       ? '<span style="color:#E74C3C;font-size:11px;">Sin tienda asignada</span>'
       : r.tienda;
-    html += `<tr>
-      <td><strong>${r.subclave}</strong></td>
-      <td>${tiendaLbl}</td>
-      <td>${r.cadena || ''}</td>
-      <td>${f$(r.total)}</td>
-    </tr>`;
+    bodyHtml += `<tr><td><strong>${r.subclave}</strong></td><td>${tiendaLbl}</td><td>${r.cadena || ''}</td>`;
+    conceptos.forEach(c => {
+      const v = r.conceptos[c] || 0;
+      totConceptos[c] += v;
+      bodyHtml += `<td>${f$(v)}</td>`;
+    });
+    bodyHtml += `<td style="font-weight:700;">${fT(r.total)}</td></tr>`;
   });
-  document.getElementById('tbl-body').innerHTML = html;
-  document.getElementById('tbl-total').textContent = f$(total);
+  document.getElementById('tbl-body').innerHTML = bodyHtml;
+
+  // Fila de totales
+  let footHtml = `<tr><td colspan="${colSpanFijo}"><strong>TOTAL</strong></td>`;
+  conceptos.forEach(c => { footHtml += `<td>${fT(totConceptos[c])}</td>`; });
+  footHtml += `<td>${fT(totalGeneral)}</td></tr>`;
+  document.getElementById('tbl-foot').innerHTML = footHtml;
+
   document.getElementById('tabla-card').style.display = 'block';
 }
 </script>
