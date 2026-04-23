@@ -4,36 +4,207 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Comisiones — Gastos Cadenas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-.main{padding:16px;max-width:1200px;margin:0 auto;}
-select{width:auto;}
-.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end;}
-.filtros>div{display:flex;flex-direction:column;gap:4px;}
-.filtros select{min-width:180px;}
-th{text-align:right;}
-th:first-child,th:nth-child(2),th:nth-child(3){text-align:left;}
-td{text-align:right;white-space:nowrap;}
-td:first-child,td:nth-child(2),td:nth-child(3){text-align:left;}
-tfoot td{text-align:right;}
-.sin-tienda{color:#DC2626;font-size:11px;}
-.stat-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-.stat-card{flex:1;min-width:90px;background:#F5F7FA;border:1px solid #E8EDF5;border-radius:10px;padding:12px 14px;text-align:center;box-shadow:0 1px 4px rgba(0,28,75,.05);}
-.stat-card .l{font-size:10px;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;}
-.stat-card .n{font-size:18px;font-weight:700;color:#002855;}
-.stat-card.total{background:#002855;border-color:#002855;}
-.stat-card.total .l{color:rgba(255,255,255,.65);}
-.stat-card.total .n{font-size:22px;color:#fff;}
-.stat-card.sin .n{color:#DC2626;}
+/* ══════════════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:   #002855;
+  --orange: #FF6B00;
+  --bg:     #F0F3F8;
+  --bg2:    #E6EBF4;
+  --card:   #FFFFFF;
+  --border: #D8E2F0;
+  --text:   #0D1B2E;
+  --text2:  #4A5D75;
+  --text3:  #8A9BB0;
+  --red:    #C0392B;
+  --red-l:  #FEE2E2;
+  --font:   'Plus Jakarta Sans', system-ui, sans-serif;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+
+/* ── Topbar ── */
+.topbar { background: var(--navy); height: 64px; display: flex; align-items: center; padding: 0 28px; position: sticky; top: 0; z-index: 200; border-bottom: 3px solid var(--orange); box-shadow: 0 4px 24px rgba(0,20,60,.28); }
+.topbar-logo-wrap { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.topbar-logo { height: 38px; width: auto; border-radius: 5px; object-fit: contain; }
+.topbar-brand { display: flex; flex-direction: column; line-height: 1.1; }
+.topbar-brand-name { font-size: 13px; font-weight: 800; color: #fff; letter-spacing: 2.5px; text-transform: uppercase; }
+.topbar-brand-sub  { font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+.topbar-title { flex: 1; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,.35); margin: 0; }
+nav { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+nav a { color: rgba(255,255,255,.6); text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 6px 11px; border-radius: 6px; transition: all .15s; white-space: nowrap; }
+nav a:hover  { color: var(--orange); background: rgba(255,107,0,.1); }
+nav a.active { color: var(--orange); font-weight: 700; }
+.nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; cursor: pointer; background: none; border: none; padding: 8px; flex-shrink: 0; }
+.nav-toggle span { display: block; width: 22px; height: 2.5px; background: #fff; border-radius: 2px; }
+
+/* ── Page Header ── */
+.page-header { background: linear-gradient(135deg, var(--navy) 0%, #004190 100%); padding: 32px 32px 56px; position: relative; overflow: hidden; }
+.page-header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 32px; background: var(--bg); border-radius: 24px 24px 0 0; }
+.page-header-orb { position: absolute; right: -40px; top: -30px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,0,.15) 0%, transparent 70%); pointer-events: none; }
+.page-header-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+.page-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; }
+.page-h1 { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -.3px; margin-bottom: 4px; }
+.page-desc { font-size: 13px; color: rgba(255,255,255,.45); font-weight: 500; }
+
+/* ── Main ── */
+.main { padding: 0 32px 48px; max-width: 1200px; margin: 0 auto; }
+
+/* ── Controls card ── */
+.controls-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 12px rgba(0,28,75,.06);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+.controls-card .ctrl-group { display: flex; flex-direction: column; gap: 5px; }
+label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); }
+select {
+  padding: 10px 36px 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A9BB0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-color: var(--bg);
+  box-shadow: 0 1px 3px rgba(0,20,60,.04);
+}
+select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,40,85,.1); }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; font-size: 12.5px; font-weight: 700; border: none; border-radius: 9px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font); letter-spacing: .3px; }
+.btn:hover { opacity: .88; transform: translateY(-1px); }
+.btn-gris  { background: var(--bg2); color: var(--text2); border: 1.5px solid var(--border); }
+.btn-print { background: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,107,0,.28); }
+
+/* ── Stat cards ── */
+.stat-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat-card {
+  flex: 1; min-width: 100px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,28,75,.06);
+}
+.stat-card .l { font-size: 9.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 7px; }
+.stat-card .n { font-size: 17px; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; }
+.stat-card.total { background: linear-gradient(135deg, var(--navy) 0%, #004190 100%); border-color: var(--navy); }
+.stat-card.total .l { color: rgba(255,255,255,.5); }
+.stat-card.total .n { font-size: 20px; color: #fff; }
+.stat-card.sin .n { color: var(--red); }
+.stat-card.con .n { color: #0E7C45; }
+
+/* ── Content card ── */
+.content-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,28,75,.07);
+}
+.content-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bg2);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.content-card-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+.content-card-sub { font-size: 12px; color: var(--text3); font-weight: 500; margin-top: 2px; }
+.print-bar { display: flex; justify-content: flex-end; padding: 10px 16px 0; }
+.print-btn { background: var(--orange); color: #fff; border: none; border-radius: 7px; padding: 7px 18px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(255,107,0,.25); }
+.print-btn:hover { opacity: .88; }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th { background: var(--navy); color: #fff; padding: 11px 14px; text-align: right; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+th:first-child, th:nth-child(2), th:nth-child(3) { text-align: left; }
+td { padding: 9px 14px; border-bottom: 1px solid #EEF2F9; vertical-align: middle; text-align: right; white-space: nowrap; }
+td:first-child, td:nth-child(2), td:nth-child(3) { text-align: left; }
+td:first-child { font-weight: 700; color: var(--navy); }
+tr:hover td { background: #F5F8FD; }
+tfoot td { background: var(--navy); color: #fff; font-weight: 700; border-top: none; padding: 11px 14px; text-align: right; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+tfoot td:first-child, tfoot td:nth-child(2), tfoot td:nth-child(3) { text-align: left; }
+.sin-tienda { color: var(--red); font-size: 11px; font-weight: 600; }
+
+/* ── Sin comisiones section ── */
+.sin-section { padding: 0 0 4px; }
+.sin-section-header { display: flex; align-items: center; gap: 8px; padding: 14px 18px 10px; }
+.sin-badge { background: var(--red-l); color: var(--red); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; border: 1px solid #FCA5A5; }
+.sin-section-title { font-size: 12px; font-weight: 700; color: var(--red); }
+
+/* ── Empty / Spinner ── */
+.empty { text-align: center; padding: 56px 24px; color: var(--text3); font-size: 13px; }
+.spinner { display: none; text-align: center; padding: 40px; color: var(--navy); font-size: 13px; }
+
+/* ── Print ── */
+.print-logo { display: none; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 3px solid var(--navy); margin-bottom: 24px; }
+.print-logo img { height: 50px; }
+.print-empresa { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+.print-semana  { font-size: 12px; color: #666; margin-top: 4px; }
+
+@media print {
+  .topbar, .page-header, .controls-card, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .print-logo { display: flex !important; }
+  .content-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  .stat-row { display: none !important; }
+  th { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tfoot td { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 720px) {
+  .topbar { height: auto; padding: 10px 16px; flex-wrap: wrap; row-gap: 0; }
+  .topbar-title { flex: 1; font-size: 9px; letter-spacing: 2px; }
+  .nav-toggle { display: flex; }
+  nav { display: none; width: 100%; flex-direction: column; gap: 2px; padding: 6px 0 10px; order: 10; border-top: 1px solid rgba(255,255,255,.12); margin-top: 8px; }
+  .topbar.nav-open nav { display: flex; }
+  nav a { padding: 10px 8px; font-size: 14px; display: block; }
+  .page-header { padding: 24px 20px 48px; }
+  .page-h1 { font-size: 22px; }
+  .main { padding: 0 14px 40px; }
+  .controls-card { flex-direction: column; align-items: stretch; }
+  select { width: 100%; min-width: 0; }
+  .stat-card .n { font-size: 15px; }
+  .stat-card.total .n { font-size: 17px; }
+}
 </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
-  <h1 class="topbar-title">GASTOS CADENAS</h1>
-  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
-    <nav>
+  <div class="topbar-logo-wrap">
+    <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo">
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">ATO</span>
+      <span class="topbar-brand-sub">Gastos Cadenas</span>
+    </div>
+  </div>
+  <h1 class="topbar-title">Sistema de Gestión</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+  <nav>
     <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
     <a href="/comisiones" class="active">Comisiones</a>
@@ -44,12 +215,32 @@ tfoot td{text-align:right;}
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
-<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-info">Comisiones</div></div></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-orb"></div>
+  <div class="page-header-inner">
+    <div class="page-eyebrow">Comisiones Telcel</div>
+    <h2 class="page-h1">Comisiones por Tienda</h2>
+    <p class="page-desc">Desglose semanal por producto: Amigo Kit, CBPC, Chip Express, Garantizada</p>
+  </div>
+</div>
+
+<!-- PRINT HEADER -->
+<div class="print-logo">
+  <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO">
+  <div>
+    <span class="print-empresa">GASTOS CADENAS</span>
+    <div class="print-semana" id="print-info">Comisiones</div>
+  </div>
+</div>
+
+<!-- MAIN -->
 <div class="main">
 
-  <div class="card">
-    <h2>Comisiones guardadas — <span id="lbl-semana" style="font-weight:400;color:#555;">selecciona una semana</span></h2>
-    <div style="margin-bottom:14px;">
+  <!-- Controls -->
+  <div class="controls-card">
+    <div class="ctrl-group">
       <label>Semana</label>
       <select id="sel-semana" style="min-width:300px;" onchange="cargarTabla()">
         <option value="">— Selecciona semana —</option>
@@ -58,50 +249,58 @@ tfoot td{text-align:right;}
         {% endfor %}
       </select>
     </div>
+    <div class="ctrl-group">
+      <label>Cadena</label>
+      <select id="fil-cadena" style="min-width:180px;" onchange="filtrar()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Tienda</label>
+      <select id="fil-tienda" style="min-width:180px;" onchange="filtrar()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <button class="btn btn-gris" onclick="limpiarFiltros()" style="align-self:flex-end;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Limpiar filtros
+    </button>
+  </div>
 
-    <div class="filtros">
+  <!-- Stat cards -->
+  <div class="stat-row" id="counter" style="display:none;">
+    <div class="stat-card"><div class="l">Amigo Kit</div><div class="n" id="cnt-amigokit">$0</div></div>
+    <div class="stat-card"><div class="l">CBPC</div><div class="n" id="cnt-cbpc">$0</div></div>
+    <div class="stat-card"><div class="l">Chip Express</div><div class="n" id="cnt-chipexpress">$0</div></div>
+    <div class="stat-card"><div class="l">Garantizada</div><div class="n" id="cnt-garantizada">$0</div></div>
+    <div class="stat-card total"><div class="l">Total General</div><div class="n" id="cnt-total">$0</div></div>
+    <div class="stat-card con"><div class="l">Con comisiones</div><div class="n" id="cnt-con">0</div></div>
+    <div class="stat-card sin"><div class="l">Sin comisiones</div><div class="n" id="cnt-sin">0</div></div>
+  </div>
+
+  <!-- Content card -->
+  <div class="content-card">
+    <div class="content-card-header">
       <div>
-        <label>Cadena</label>
-        <select id="fil-cadena" onchange="filtrar()">
-          <option value="">Todas</option>
-        </select>
+        <div class="content-card-title">Comisiones — <span id="lbl-semana" style="font-weight:500;color:var(--text2);">selecciona una semana</span></div>
+        <div class="content-card-sub">Datos importados desde archivo Telcel</div>
       </div>
-      <div>
-        <label>Tienda</label>
-        <select id="fil-tienda" onchange="filtrar()">
-          <option value="">Todas</option>
-        </select>
-      </div>
-      <div style="align-self:flex-end;">
-        <button class="btn" style="background:#EEF2F7;border:1px solid #D0D9E8;color:#444;padding:8px 14px;" onclick="limpiarFiltros()">Limpiar filtros</button>
-      </div>
+      <button class="print-btn no-print" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir PDF
+      </button>
     </div>
-
-    <!-- Panel de contadores: una fila entre filtros y tabla -->
-    <div class="stat-row" id="counter" style="display:none;">
-      <div class="stat-card"><div class="l">AMIGO KIT</div><div class="n" id="cnt-amigokit">$0</div></div>
-      <div class="stat-card"><div class="l">CBPC</div><div class="n" id="cnt-cbpc">$0</div></div>
-      <div class="stat-card"><div class="l">CHIP EXPRESS</div><div class="n" id="cnt-chipexpress">$0</div></div>
-      <div class="stat-card"><div class="l">GARANTIZADA</div><div class="n" id="cnt-garantizada">$0</div></div>
-      <div class="stat-card total"><div class="l">TOTAL</div><div class="n" id="cnt-total">$0</div></div>
-      <div class="stat-card"><div class="l">Con comisiones</div><div class="n" id="cnt-con">0</div></div>
-      <div class="stat-card sin"><div class="l">Sin comisiones</div><div class="n" id="cnt-sin">0</div></div>
-    </div>
-
-    <div class="spinner" id="spinner">Cargando...</div>
-    <div class="no-print" style="display:flex;justify-content:flex-end;margin:8px 0 4px;">
-      <button onclick="window.print()" style="background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">🖨 Imprimir PDF</button>
-    </div>
-    <div style="overflow-x:auto;" id="tabla-wrap">
+    <div class="spinner" id="spinner">Cargando datos...</div>
+    <div class="table-wrap" id="tabla-wrap">
       <div class="empty">Selecciona una semana para ver las comisiones</div>
     </div>
   </div>
 
-</div>
+</div><!-- /main -->
+
 <script>
 let datosCompletos = { conceptos: [], rows: [] };
 
-// ── Cargar tabla desde DB ──
 async function cargarTabla() {
   const sid = document.getElementById('sel-semana').value;
   const sel = document.getElementById('sel-semana');
@@ -137,15 +336,13 @@ async function cargarTabla() {
   }
 }
 
-// ── Filtros ──
 function poblarFiltros(rows) {
   const cadenas = [...new Set(rows.map(r => r.cadena).filter(c => c && c !== 'Sin cadena'))].sort();
   const tiendas = [...new Set(rows.map(r => r.tienda).filter(t => t && t !== 'Sin tienda asignada'))].sort();
 
   const fc = document.getElementById('fil-cadena');
   const ft = document.getElementById('fil-tienda');
-  const selC = fc.value;
-  const selT = ft.value;
+  const selC = fc.value, selT = ft.value;
 
   fc.innerHTML = '<option value="">Todas</option>' + cadenas.map(c => `<option value="${c}">${c}</option>`).join('');
   ft.innerHTML = '<option value="">Todas</option>' + tiendas.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -169,7 +366,6 @@ function limpiarFiltros() {
   filtrar();
 }
 
-// ── Contadores ──
 function actualizarCounter(rows, conceptos, sinComisiones) {
   const totCol = {};
   conceptos.forEach(c => { totCol[c] = 0; });
@@ -189,7 +385,6 @@ function actualizarCounter(rows, conceptos, sinComisiones) {
   document.getElementById('counter').style.display       = 'flex';
 }
 
-// ── Render tabla ──
 const f$ = n => parseFloat(n||0) === 0 ? '' :
   '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fT = n => '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -200,12 +395,10 @@ function renderTabla(rows, conceptos) {
     return;
   }
 
-  // Encabezado fijo: Cadena | Tienda | Clave Principal | ...conceptos | Total
   let head = '<thead><tr><th>Cadena</th><th>Tienda</th><th>Clave Principal</th>';
   conceptos.forEach(c => { head += `<th>${c}</th>`; });
   head += '<th>Total</th></tr></thead>';
 
-  // Cuerpo
   const totCol = {};
   conceptos.forEach(c => { totCol[c] = 0; });
   let totalGen = 0;
@@ -215,32 +408,33 @@ function renderTabla(rows, conceptos) {
     totalGen += r.total;
     const tLbl = r.tienda === 'Sin tienda asignada'
       ? '<span class="sin-tienda">Sin tienda asignada</span>' : r.tienda;
-    body += `<tr><td>${r.cadena||''}</td><td>${tLbl}</td><td style="font-family:monospace;font-size:11px;">${r.clave_principal||''}</td>`;
+    body += `<tr><td>${r.cadena||''}</td><td style="font-weight:500;color:var(--text2);">${tLbl}</td><td style="font-family:monospace;font-size:11px;color:var(--text3);">${r.clave_principal||''}</td>`;
     conceptos.forEach(c => {
       const v = r.conceptos[c.toUpperCase()] || r.conceptos[c] || 0;
       totCol[c] += v;
       body += `<td>${f$(v)}</td>`;
     });
-    body += `<td style="font-weight:700;">${fT(r.total)}</td></tr>`;
+    body += `<td style="font-weight:700;color:var(--navy);">${fT(r.total)}</td></tr>`;
   });
   body += '</tbody>';
 
-  // Pie
   let foot = `<tfoot><tr><td colspan="3">TOTAL</td>`;
   conceptos.forEach(c => { foot += `<td>${fT(totCol[c])}</td>`; });
   foot += `<td>${fT(totalGen)}</td></tr></tfoot>`;
 
-  document.getElementById('tabla-wrap').innerHTML = `<table>${head}${body}${foot}</table>`
+  document.getElementById('tabla-wrap').innerHTML =
+    `<table>${head}${body}${foot}</table>`
     + renderSinComisiones(datosCompletos.sin_comisiones || [], conceptos.length);
+
   actualizarCounter(rows, conceptos, datosCompletos.sin_comisiones);
 }
 
 function renderSinComisiones(lista, numConceptos) {
   if (!lista.length) return '';
-  const cols = 3 + numConceptos + 1;
-  let html = `<div style="margin-top:18px;">
-    <div style="font-size:13px;font-weight:700;color:#E74C3C;margin-bottom:8px;">
-      Tiendas sin comisiones (${lista.length})
+  let html = `<div class="sin-section">
+    <div class="sin-section-header">
+      <span class="sin-section-title">Tiendas sin comisiones</span>
+      <span class="sin-badge">${lista.length}</span>
     </div>
     <table>
       <thead><tr style="background:#C0392B;">
@@ -248,21 +442,19 @@ function renderSinComisiones(lista, numConceptos) {
   for (let i = 0; i < numConceptos; i++) html += '<th>—</th>';
   html += `<th>$0</th></tr></thead><tbody>`;
   lista.forEach(t => {
-    html += `<tr style="opacity:.7;">
+    html += `<tr style="opacity:.65;">
       <td>${t.cadena||''}</td>
-      <td>${t.tienda}</td>
-      <td style="font-family:monospace;font-size:11px;">${t.clave_principal||''}</td>`;
+      <td style="font-weight:500;color:var(--text2);">${t.tienda}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3);">${t.clave_principal||''}</td>`;
     for (let i = 0; i < numConceptos; i++) html += '<td></td>';
-    html += `<td style="color:#aaa;">$0.00</td></tr>`;
+    html += `<td style="color:var(--text3);">$0.00</td></tr>`;
   });
   html += '</tbody></table></div>';
   return html;
 }
 
-// Carga inicial si hay semana preseleccionada
 if (document.getElementById('sel-semana').value) cargarTabla();
 
-// Fecha en logo de impresión
 (function(){
   const d = new Date();
   const f = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
