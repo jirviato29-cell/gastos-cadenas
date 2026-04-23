@@ -15,6 +15,9 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql://postgres:password@localhost:5432/gastos"
 )
+# Railway entrega URLs con prefijo "postgres://" — psycopg2 requiere "postgresql://"
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 connection_pool = pool.ThreadedConnectionPool(2, 10, DATABASE_URL)
 
