@@ -4,128 +4,709 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Balance — Gastos Cadenas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-.main{padding:24px;max-width:860px;margin:0 auto;}
-.controls{display:flex;gap:12px;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap;}
-.controls>div{display:flex;flex-direction:column;gap:4px;}
-select{min-width:300px;}
-.estado{background:#fff;border:1px solid #E8EDF5;border-radius:14px;padding:40px 48px;box-shadow:0 4px 24px rgba(0,28,75,.09);}
-.estado-header{text-align:center;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #002855;}
-.estado-header .empresa{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#94A3B8;margin-bottom:6px;}
-.estado-header .titulo{font-size:24px;font-weight:800;color:#002855;}
-.estado-header .periodo{font-size:13px;color:#64748B;margin-top:6px;font-weight:500;}
-.seccion{margin-bottom:28px;}
-.sec-title{font-size:14px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#002855;margin-bottom:14px;padding-bottom:7px;border-bottom:3px solid #FF6B00;display:inline-block;}
-.linea-sep{border:none;border-top:1px solid #E8EDF5;margin:8px 0;}
-.fila{display:flex;align-items:baseline;padding:6px 0;font-size:13.5px;}
-.fila-sub{display:flex;align-items:baseline;padding:4px 0 4px 24px;font-size:13px;}
-.fila-sub .concepto{color:#64748B;}
-.concepto{flex:1;color:#1A202C;}
-.detalle{font-size:11px;color:#94A3B8;margin-left:6px;font-weight:400;white-space:nowrap;}
-.monto{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;min-width:140px;text-align:right;color:#002855;}
-.monto.rojo{color:#DC2626;}
-.monto.verde{color:#16A34A;}
-.fila-total{display:flex;align-items:baseline;padding:12px 0 8px;font-size:15px;font-weight:700;border-top:1.5px solid #CBD5E1;}
-.fila-total .concepto{color:#002855;}
-.fila-total .monto{font-size:16px;}
-.resumen{background:linear-gradient(135deg,#002855 0%,#003D80 100%);border-radius:12px;padding:28px 36px;margin-top:4px;}
-.resumen .sec-title{color:rgba(255,255,255,.9);border-bottom-color:rgba(255,107,0,.6);}
-.res-fila{display:flex;align-items:baseline;padding:8px 0;font-size:14px;}
-.res-fila .concepto{flex:1;color:rgba(255,255,255,.8);font-weight:500;}
-.res-fila .monto{font-variant-numeric:tabular-nums;font-weight:700;min-width:160px;text-align:right;font-size:15px;color:#fff;}
-.res-sep{border:none;border-top:1px solid rgba(255,255,255,.18);margin:4px 0;}
-.res-doble{border:none;border-top:2px solid rgba(255,255,255,.35);margin:8px 0;}
-.utilidad-fila{display:flex;align-items:baseline;padding:14px 0 6px;}
-.utilidad-fila .concepto{flex:1;font-size:17px;font-weight:700;color:#fff;}
-.utilidad-fila .monto{font-variant-numeric:tabular-nums;font-weight:800;font-size:28px;min-width:160px;text-align:right;}
-.margen-fila{display:flex;padding:4px 0;font-size:12px;color:rgba(255,255,255,.55);}
-.margen-fila span{margin-left:auto;font-weight:700;font-size:14px;color:rgba(255,255,255,.85);}
-.resumen .monto.verde{color:#4ADE80;}
-.resumen .monto.rojo{color:#FC8181;}
-@media (max-width:640px){
-  /* Estado general */
-  .estado{padding:18px 14px;}
-  .estado-header .titulo{font-size:18px;}
-
-  /* Sección Ingresos / Gastos: texto completo, truncado con ellipsis si no cabe */
-  .fila, .fila-sub, .fila-total{flex-wrap:nowrap;}
-  .fila .concepto, .fila-sub .concepto, .fila-total .concepto{
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    min-width:0; font-size:13px;
-  }
-  .fila .monto, .fila-sub .monto, .fila-total .monto{
-    flex-shrink:0; white-space:nowrap; min-width:auto; font-size:13px;
-    padding-left:8px; text-align:right;
-  }
-  .fila-total .monto{font-size:14px;}
-  .detalle{display:none;}
-
-  /* Bloque azul — Resumen Ejecutivo */
-  .resumen{padding:18px 14px;border-radius:10px;}
-
-  /* Título en una sola línea */
-  .resumen .sec-title{
-    white-space:nowrap; font-size:16px; letter-spacing:1.5px;
-    display:block; width:100%;
-  }
-
-  /* res-fila: columna — etiqueta arriba, monto abajo, sin truncado */
-  .res-fila{flex-direction:column; align-items:flex-start; padding:8px 0; margin-bottom:4px;}
-  .res-fila .concepto{
-    white-space:normal; overflow:visible; word-break:keep-all;
-    flex:none; min-width:0; font-size:12px;
-    color:rgba(255,255,255,.85);
-  }
-  .res-fila .monto{
-    font-size:18px; font-weight:700; white-space:nowrap;
-    min-width:auto; text-align:left; padding-left:0; color:#fff;
-  }
-
-  /* Utilidad Neta */
-  .utilidad-fila{flex-direction:column; align-items:flex-start; padding:10px 0 4px;}
-  .utilidad-fila .concepto{
-    white-space:normal; word-break:keep-all;
-    flex:none; font-size:12px; margin-bottom:2px;
-  }
-  .utilidad-fila .monto{
-    font-size:22px; min-width:auto; text-align:left; padding-left:0;
-  }
-
-  /* Margen */
-  .margen-fila{font-size:12px;}
-  .margen-fila span{font-size:13px;}
+/* ══════════════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:    #002855;
+  --navy2:   #003A7A;
+  --orange:  #FF6B00;
+  --orange2: #E55E00;
+  --bg:      #F0F3F8;
+  --bg2:     #E6EBF4;
+  --card:    #FFFFFF;
+  --border:  #D8E2F0;
+  --text:    #0D1B2E;
+  --text2:   #4A5D75;
+  --text3:   #8A9BB0;
+  --green:   #0E7C45;
+  --green-l: #D1FAE5;
+  --red:     #C0392B;
+  --red-l:   #FEE2E2;
+  --font:    'Plus Jakarta Sans', system-ui, sans-serif;
 }
-@media print{
-  .estado{border:none!important;box-shadow:none!important;padding:0!important;}
-  .resumen{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  /* Filas más compactas al imprimir */
-  .fila{padding:2px 0;font-size:12px;}
-  .fila-sub{padding:1px 0 1px 20px;font-size:11.5px;}
-  .fila-total{padding:6px 0 4px;font-size:13px;}
-  .concepto{flex:1;}
-  .monto{min-width:120px;text-align:right;}
-  .fila-total .monto{font-size:13px;}
-  .seccion{margin-bottom:16px;}
-  .sec-title{margin-bottom:8px;padding-bottom:4px;font-size:12px;}
-  .linea-sep{margin:4px 0;}
-  .res-fila{padding:4px 0;font-size:12px;}
-  .res-fila .monto{min-width:120px;font-size:12px;}
-  .utilidad-fila{padding:8px 0 4px;}
-  .utilidad-fila .concepto{font-size:14px;}
-  .utilidad-fila .monto{font-size:20px;min-width:120px;}
-  .estado-header{margin-bottom:16px;padding-bottom:12px;}
-  .resumen{padding:16px 20px;}
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════════════════ */
+.topbar {
+  background: var(--navy);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  border-bottom: 3px solid var(--orange);
+  box-shadow: 0 4px 24px rgba(0,20,60,.28);
+}
+.topbar-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.topbar-logo {
+  height: 38px;
+  width: auto;
+  border-radius: 5px;
+  object-fit: contain;
+}
+.topbar-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.topbar-brand-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+.topbar-brand-sub {
+  font-size: 9.5px;
+  color: rgba(255,255,255,.45);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.topbar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  margin: 0;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+nav a {
+  color: rgba(255,255,255,.6);
+  text-decoration: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 6px;
+  transition: all .15s;
+  white-space: nowrap;
+  letter-spacing: .3px;
+}
+nav a:hover { color: var(--orange); background: rgba(255,107,0,.1); }
+nav a.active { color: var(--orange); font-weight: 700; }
+
+/* Hamburger */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.nav-toggle span { display: block; width: 22px; height: 2.5px; background: #fff; border-radius: 2px; }
+
+/* ══════════════════════════════════════════════════════════
+   PAGE LAYOUT
+══════════════════════════════════════════════════════════ */
+.page-header {
+  background: var(--navy);
+  padding: 32px 32px 56px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 32px;
+  background: var(--bg);
+  border-radius: 24px 24px 0 0;
+}
+.page-header-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 6px;
+}
+.page-h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.3px;
+  margin-bottom: 4px;
+}
+.page-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,.45);
+  font-weight: 500;
+}
+
+/* Decorative orb */
+.page-header-orb {
+  position: absolute;
+  right: -40px;
+  top: -30px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,107,0,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.main {
+  padding: 0 32px 48px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CONTROLS BAR
+══════════════════════════════════════════════════════════ */
+.controls-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.controls-bar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+}
+select {
+  min-width: 320px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: var(--font);
+  background: var(--card);
+  color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A9BB0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  box-shadow: 0 1px 4px rgba(0,20,60,.06);
+}
+select:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(0,40,85,.1);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  font-family: var(--font);
+  letter-spacing: .3px;
+}
+.btn:hover { opacity: .88; transform: translateY(-1px); }
+.btn-print {
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255,107,0,.3);
+}
+
+/* ══════════════════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════════════════ */
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text3);
+}
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: var(--bg2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty-icon svg { opacity: .4; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; color: var(--text3); }
+
+/* ══════════════════════════════════════════════════════════
+   ESTADO DE RESULTADOS — CARD
+══════════════════════════════════════════════════════════ */
+.estado {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,28,75,.08);
+}
+
+/* Header del estado */
+.estado-header {
+  background: linear-gradient(135deg, var(--navy) 0%, #004190 100%);
+  padding: 32px 40px 28px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.estado-header::before {
+  content: '';
+  position: absolute;
+  right: -20px; top: -20px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: rgba(255,107,0,.1);
+}
+.estado-header-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255,255,255,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.15);
+}
+.estado-header-logo img { width: 100%; height: 100%; object-fit: contain; }
+.estado-header-text { flex: 1; }
+.estado-empresa {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 4px;
+}
+.estado-titulo {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.2px;
+}
+.estado-periodo {
+  font-size: 12px;
+  color: rgba(255,255,255,.55);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.estado-badge {
+  background: rgba(255,107,0,.18);
+  border: 1px solid rgba(255,107,0,.35);
+  color: #FFB366;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+/* Body del estado */
+.estado-body {
+  padding: 32px 40px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SECCIONES INGRESOS / GASTOS
+══════════════════════════════════════════════════════════ */
+.seccion { margin-bottom: 32px; }
+
+.sec-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bg2);
+}
+.sec-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sec-icon.ingreso { background: #D1FAE5; }
+.sec-icon.gasto   { background: var(--red-l); }
+.sec-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.fila {
+  display: flex;
+  align-items: baseline;
+  padding: 7px 0;
+  font-size: 13.5px;
+  border-bottom: 1px dashed transparent;
+  transition: background .1s;
+}
+.fila:hover { background: #F8FBFF; border-radius: 6px; padding-left: 6px; padding-right: 6px; }
+.fila-sub {
+  display: flex;
+  align-items: baseline;
+  padding: 5px 0 5px 20px;
+  font-size: 13px;
+}
+.fila-sub .concepto { color: var(--text2); }
+.concepto {
+  flex: 1;
+  color: var(--text);
+  font-weight: 500;
+}
+.concepto-label {
+  font-weight: 500;
+}
+.detalle {
+  font-size: 10.5px;
+  color: var(--text3);
+  margin-left: 7px;
+  font-weight: 400;
+  white-space: nowrap;
+  background: var(--bg2);
+  padding: 1px 7px;
+  border-radius: 99px;
+}
+.monto {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 150px;
+  text-align: right;
+  color: var(--navy);
+  font-size: 13.5px;
+}
+.monto.rojo { color: var(--red); }
+.monto.verde { color: var(--green); }
+
+.fila-subtitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.fila-subtitulo::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--bg2);
+}
+
+.fila-total {
+  display: flex;
+  align-items: center;
+  padding: 14px 10px;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  margin-top: 6px;
+}
+.fila-total.ingreso-total {
+  background: linear-gradient(90deg, #ECFDF5, #F0FDF8);
+  border: 1px solid #A7F3D0;
+}
+.fila-total.gasto-total {
+  background: linear-gradient(90deg, #FFF5F5, #FEF2F2);
+  border: 1px solid #FCA5A5;
+}
+.fila-total .concepto { color: var(--text); font-weight: 700; }
+.fila-total .monto { font-size: 15px; }
+.fila-total.ingreso-total .monto { color: var(--green); }
+.fila-total.gasto-total .monto   { color: var(--red); }
+
+/* ══════════════════════════════════════════════════════════
+   RESUMEN EJECUTIVO
+══════════════════════════════════════════════════════════ */
+.resumen {
+  background: linear-gradient(145deg, var(--navy) 0%, #004499 100%);
+  border-radius: 14px;
+  padding: 30px 36px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.resumen::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,107,0,.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+.resumen::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: 10px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+.resumen-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.resumen-header-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: rgba(255,107,0,.2);
+  border: 1px solid rgba(255,107,0,.3);
+  display: flex; align-items: center; justify-content: center;
+}
+.resumen-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.5);
+}
+
+.res-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.res-card {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.res-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 6px;
+}
+.res-card-value {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  letter-spacing: -.3px;
+}
+.res-card-value.rojo { color: #FC8181; }
+.res-card-value.verde { color: #4ADE80; }
+
+.res-divider {
+  height: 1px;
+  background: rgba(255,255,255,.12);
+  margin: 4px 0 20px;
+}
+
+.utilidad-block {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.utilidad-label-wrap { flex: 1; }
+.utilidad-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+  margin-bottom: 4px;
+}
+.utilidad-label {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+.utilidad-value {
+  font-size: 40px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+.utilidad-value.verde { color: #4ADE80; }
+.utilidad-value.rojo  { color: #FC8181; }
+
+.margen-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 99px;
+  padding: 5px 14px;
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+  font-weight: 500;
+}
+.margen-pill strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255,255,255,.85);
+}
+
+/* ══════════════════════════════════════════════════════════
+   PRINT HEADER
+══════════════════════════════════════════════════════════ */
+.print-logo {
+  display: none;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--navy);
+  margin-bottom: 24px;
+}
+.print-logo img { height: 50px; width: auto; }
+.print-empresa { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+.print-semana  { font-size: 12px; color: #666; margin-top: 4px; }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .topbar { height: auto; padding: 10px 16px; flex-wrap: wrap; row-gap: 0; }
+  .topbar-title { flex: 1; font-size: 9px; letter-spacing: 2px; }
+  .nav-toggle { display: flex; }
+  nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 0 10px;
+    order: 10;
+    border-top: 1px solid rgba(255,255,255,.12);
+    margin-top: 8px;
+  }
+  .topbar.nav-open nav { display: flex; }
+  nav a { padding: 10px 8px; font-size: 14px; display: block; }
+
+  .page-header { padding: 24px 20px 48px; }
+  .page-h1 { font-size: 22px; }
+  .main { padding: 0 16px 40px; }
+
+  .estado-header { padding: 22px 22px; flex-wrap: wrap; gap: 16px; }
+  .estado-badge { display: none; }
+  .estado-titulo { font-size: 18px; }
+  .estado-body { padding: 20px 18px; }
+
+  select { min-width: 0; width: 100%; }
+  .controls-bar { flex-direction: column; align-items: stretch; }
+
+  .res-grid { grid-template-columns: 1fr 1fr; }
+  .res-card-value { font-size: 16px; }
+  .utilidad-value { font-size: 28px; }
+  .resumen { padding: 22px 18px; }
+
+  .fila, .fila-sub, .fila-total { flex-wrap: nowrap; }
+  .concepto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 13px; }
+  .monto { flex-shrink: 0; white-space: nowrap; min-width: auto; font-size: 13px; padding-left: 8px; }
+  .detalle { display: none; }
+  .fila-total { padding: 12px 10px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════════════════ */
+@media print {
+  .topbar, .page-header, .controls-bar, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .print-logo { display: flex !important; }
+  .estado { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 8px !important; }
+  .estado-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; border-radius: 8px 8px 0 0 !important; }
+  .resumen { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fila { padding: 3px 0; font-size: 12px; }
+  .fila-sub { padding: 2px 0 2px 18px; font-size: 11.5px; }
+  .monto { min-width: 120px; }
+  .seccion { margin-bottom: 16px; }
+  .estado-body { padding: 20px 28px; }
 }
 </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
-  <h1 class="topbar-title">GASTOS CADENAS</h1>
-  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
-    <nav>
+  <div class="topbar-logo-wrap">
+    <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo">
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">ATO</span>
+      <span class="topbar-brand-sub">Gastos Cadenas</span>
+    </div>
+  </div>
+  <h1 class="topbar-title">Sistema de Gestión</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+  <nav>
     <a href="/balance" class="active">Balance</a>
     <a href="/gastos">Gastos</a>
     <a href="/comisiones">Comisiones</a>
@@ -136,9 +717,31 @@ select{min-width:300px;}
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
-<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-semana-lbl"></div></div></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-orb"></div>
+  <div class="page-header-inner">
+    <div class="page-eyebrow">Finanzas Operativas</div>
+    <h2 class="page-h1">Estado de Resultados</h2>
+    <p class="page-desc">Balance semanal de ingresos, gastos y utilidad neta por cadena</p>
+  </div>
+</div>
+
+<!-- PRINT HEADER -->
+<div class="print-logo">
+  <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO">
+  <div>
+    <span class="print-empresa">GASTOS CADENAS</span>
+    <div class="print-semana" id="print-semana-lbl"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
 <div class="main">
-  <div class="controls">
+
+  <!-- CONTROLS -->
+  <div class="controls-bar">
     <div>
       <label>Semana</label>
       <select id="sel-semana" onchange="cargar()">
@@ -148,15 +751,31 @@ select{min-width:300px;}
         {% endfor %}
       </select>
     </div>
-    <button class="btn btn-azul no-print" id="btn-imprimir-balance" onclick="window.print()" style="display:none;">🖨 Imprimir</button>
+    <button class="btn btn-print no-print" id="btn-imprimir-balance" onclick="window.print()" style="display:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir
+    </button>
   </div>
 
+  <!-- CONTENIDO DINÁMICO -->
   <div id="contenido">
-    <div class="empty">Selecciona una semana para generar el balance.</div>
+    <div class="estado" style="padding: 0;">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#002855" stroke-width="1.8" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </div>
+        <div class="empty-title">Selecciona una semana</div>
+        <div class="empty-sub">El balance se generará automáticamente</div>
+      </div>
+    </div>
   </div>
-</div>
+
+</div><!-- /main -->
 
 <script>
+/* ── Formatters ── */
 function f$(n){
   if(n == null) return '—';
   const abs = Math.abs(n);
@@ -164,20 +783,33 @@ function f$(n){
   return n < 0 ? `(${fmt})` : fmt;
 }
 function fp(n){ return (n == null ? '0.0' : n.toFixed(1)) + '%'; }
+function cap(s){
+  return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
 
 async function cargar(){
   const sid = parseInt(document.getElementById('sel-semana').value) || 0;
   const div = document.getElementById('contenido');
   const btnImp = document.getElementById('btn-imprimir-balance');
   if(!sid){
-    div.innerHTML = '<div class="empty">Selecciona una semana para generar el balance.</div>';
+    div.innerHTML = `<div class="estado" style="padding:0;">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#002855" stroke-width="1.8" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </div>
+        <div class="empty-title">Selecciona una semana</div>
+        <div class="empty-sub">El balance se generará automáticamente</div>
+      </div>
+    </div>`;
     if(btnImp) btnImp.style.display = 'none';
     return;
   }
   const res  = await fetch(`/api/balance/${sid}`);
   const data = await res.json();
   if(!data.ok){
-    div.innerHTML = `<div class="empty">${data.error}</div>`;
+    div.innerHTML = `<div class="estado" style="padding:0;"><div class="empty-state"><div class="empty-title">Error</div><div class="empty-sub">${data.error}</div></div></div>`;
     if(btnImp) btnImp.style.display = 'none';
     return;
   }
@@ -191,168 +823,184 @@ async function cargar(){
   const M  = data.margen;
   const L  = I.telcel_lineas || {};
 
-  // Orden preferido para productos Telcel
   const ORDEN_TELCEL = ['AMIGO KIT','CBPC','CHIP EXPRESS','GARANTIZADA'];
   const ORDEN_EXTRA  = ['2% AP','Volumen Garantizado','Amigo Kit','Cadena Comercial'];
 
-  // Productos Telcel ordenados
   const telcelKeys = [
     ...ORDEN_TELCEL.filter(k => I.telcel[k] != null),
     ...Object.keys(I.telcel).filter(k => !ORDEN_TELCEL.includes(k)).sort()
   ];
-
-  // Comisiones Extra ordenadas
   const extraKeys = [
     ...ORDEN_EXTRA.filter(k => I.extra[k] != null),
     ...Object.keys(I.extra).filter(k => !ORDEN_EXTRA.includes(k)).sort()
   ];
-
   const hayExtra = extraKeys.length > 0;
+
+  /* ── SVG icons ── */
+  const icoIngreso = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0E7C45" stroke-width="2.2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+  const icoGasto   = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2.2" stroke-linecap="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`;
+  const icoResumen = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9A3C" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
 
   let html = `<div class="estado">
 
+  <!-- Header -->
   <div class="estado-header">
-    <div class="empresa">Gastos Cadenas</div>
-    <div class="titulo">Estado de Resultados</div>
-    <div class="periodo">${texto}</div>
+    <div class="estado-header-logo">
+      <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO">
+    </div>
+    <div class="estado-header-text">
+      <div class="estado-empresa">Gastos Cadenas</div>
+      <div class="estado-titulo">Estado de Resultados</div>
+      <div class="estado-periodo">${texto}</div>
+    </div>
+    <div class="estado-badge">Semanal</div>
   </div>
 
-  <!-- INGRESOS -->
-  <div class="seccion">
-    <div class="sec-title">Ingresos</div>
-    <hr class="linea-sep">`;
+  <!-- Body -->
+  <div class="estado-body">
 
-  telcelKeys.forEach(k => {
-    const lineas = L[k] ? `<span class="detalle">(${L[k].toLocaleString('es-MX')} líneas)</span>` : '';
-    html += `
-    <div class="fila">
-      <span class="concepto">${cap(k)}${lineas}</span>
-      <span class="monto">${f$(I.telcel[k])}</span>
-    </div>`;
-  });
+    <!-- INGRESOS -->
+    <div class="seccion">
+      <div class="sec-header">
+        <div class="sec-icon ingreso">${icoIngreso}</div>
+        <span class="sec-title">Ingresos</span>
+      </div>`;
+
+  if(telcelKeys.length > 0){
+    html += `<div class="fila-subtitulo">Comisiones Telcel</div>`;
+    telcelKeys.forEach(k => {
+      const lineas = L[k] ? `<span class="detalle">${L[k].toLocaleString('es-MX')} líneas</span>` : '';
+      html += `<div class="fila">
+        <span class="concepto"><span class="concepto-label">${cap(k)}</span>${lineas}</span>
+        <span class="monto">${f$(I.telcel[k])}</span>
+      </div>`;
+    });
+  }
 
   if(hayExtra){
-    html += `
-    <div class="fila" style="margin-top:6px;">
-      <span class="concepto" style="font-weight:600;color:#002855;">Comisiones Extra</span>
-      <span class="monto"></span>
-    </div>`;
+    html += `<div class="fila-subtitulo" style="margin-top:12px;">Comisiones Extra</div>`;
     extraKeys.forEach(k => {
-      html += `
-    <div class="fila-sub">
-      <span class="concepto">· ${k}</span>
-      <span class="monto">${f$(I.extra[k])}</span>
-    </div>`;
+      html += `<div class="fila-sub">
+        <span class="concepto">${k}</span>
+        <span class="monto">${f$(I.extra[k])}</span>
+      </div>`;
     });
   }
 
   html += `
-    <hr class="linea-sep" style="margin-top:10px;">
-    <div class="fila-total">
-      <span class="concepto">Total Ingresos</span>
-      <span class="monto">${f$(I.total)}</span>
+      <div class="fila-total ingreso-total" style="margin-top:14px;">
+        <span class="concepto">Total Ingresos</span>
+        <span class="monto verde">${f$(I.total)}</span>
+      </div>
     </div>
-  </div>
 
-  <!-- GASTOS -->
-  <div class="seccion">
-    <div class="sec-title">Gastos</div>
-    <hr class="linea-sep">
-
-    <div class="fila">
-      <span class="concepto">Sueldos<span class="detalle">(${G.n_prom} promotores)</span></span>
-      <span class="monto rojo">${f$(G.sueldos)}</span>
-    </div>`;
+    <!-- GASTOS -->
+    <div class="seccion">
+      <div class="sec-header">
+        <div class="sec-icon gasto">${icoGasto}</div>
+        <span class="sec-title">Gastos</span>
+      </div>
+      <div class="fila-subtitulo">Nómina y Obligaciones</div>
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Sueldos</span><span class="detalle">${G.n_prom} promotores</span></span>
+        <span class="monto rojo">${f$(G.sueldos)}</span>
+      </div>`;
 
   if(G.comisiones > 0) html += `
-    <div class="fila">
-      <span class="concepto">Comisiones<span class="detalle">(${G.n_com} promotores)</span></span>
-      <span class="monto rojo">${f$(G.comisiones)}</span>
-    </div>`;
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Comisiones</span><span class="detalle">${G.n_com} promotores</span></span>
+        <span class="monto rojo">${f$(G.comisiones)}</span>
+      </div>`;
 
   if(G.seguro > 0) html += `
-    <div class="fila">
-      <span class="concepto">Seguro Social<span class="detalle">(${G.n_seg} con seguro)</span></span>
-      <span class="monto rojo">${f$(G.seguro)}</span>
-    </div>`;
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Seguro Social</span><span class="detalle">${G.n_seg} con seguro</span></span>
+        <span class="monto rojo">${f$(G.seguro)}</span>
+      </div>`;
 
   html += `
-    <div class="fila">
-      <span class="concepto">ISN<span class="detalle">(${G.n_prom} promotores)</span></span>
-      <span class="monto rojo">${f$(G.isn)}</span>
-    </div>
-    <div class="fila">
-      <span class="concepto">Impuestos<span class="detalle">(${G.n_tiend} tiendas)</span></span>
-      <span class="monto rojo">${f$(G.impuestos)}</span>
-    </div>
-    <div class="fila">
-      <span class="concepto">Gastos Indirectos<span class="detalle">(${G.n_tiend} tiendas)</span></span>
-      <span class="monto rojo">${f$(G.gastos_indirectos)}</span>
-    </div>
-    <div class="fila">
-      <span class="concepto">Fondo de Contingencia<span class="detalle">(${G.n_prom} promotores)</span></span>
-      <span class="monto rojo">${f$(G.fondo_contingencia)}</span>
-    </div>
-    <div class="fila">
-      <span class="concepto">Aguinaldo<span class="detalle">(${G.n_prom} promotores)</span></span>
-      <span class="monto rojo">${f$(G.aguinaldo)}</span>
-    </div>`;
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">ISN</span><span class="detalle">${G.n_prom} promotores</span></span>
+        <span class="monto rojo">${f$(G.isn)}</span>
+      </div>
+      <div class="fila-subtitulo" style="margin-top:8px;">Operativos y Obligaciones</div>
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Impuestos</span><span class="detalle">${G.n_tiend} tiendas</span></span>
+        <span class="monto rojo">${f$(G.impuestos)}</span>
+      </div>
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Gastos Indirectos</span><span class="detalle">${G.n_tiend} tiendas</span></span>
+        <span class="monto rojo">${f$(G.gastos_indirectos)}</span>
+      </div>
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Fondo de Contingencia</span><span class="detalle">${G.n_prom} promotores</span></span>
+        <span class="monto rojo">${f$(G.fondo_contingencia)}</span>
+      </div>
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Aguinaldo</span><span class="detalle">${G.n_prom} promotores</span></span>
+        <span class="monto rojo">${f$(G.aguinaldo)}</span>
+      </div>`;
 
   if(G.vacaciones > 0) html += `
-    <div class="fila">
-      <span class="concepto">Vacaciones<span class="detalle">(${G.n_vac} promotores)</span></span>
-      <span class="monto rojo">${f$(G.vacaciones)}</span>
-    </div>`;
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Vacaciones</span><span class="detalle">${G.n_vac} promotores</span></span>
+        <span class="monto rojo">${f$(G.vacaciones)}</span>
+      </div>`;
 
   if(G.prima_vacacional > 0) html += `
-    <div class="fila">
-      <span class="concepto">Prima Vacacional<span class="detalle">(${G.n_pv} promotores)</span></span>
-      <span class="monto rojo">${f$(G.prima_vacacional)}</span>
-    </div>`;
+      <div class="fila">
+        <span class="concepto"><span class="concepto-label">Prima Vacacional</span><span class="detalle">${G.n_pv} promotores</span></span>
+        <span class="monto rojo">${f$(G.prima_vacacional)}</span>
+      </div>`;
 
   html += `
-    <hr class="linea-sep" style="margin-top:10px;">
-    <div class="fila-total">
-      <span class="concepto">Total Gastos</span>
-      <span class="monto rojo">${f$(G.total)}</span>
+      <div class="fila-total gasto-total" style="margin-top:14px;">
+        <span class="concepto">Total Gastos</span>
+        <span class="monto rojo">${f$(G.total)}</span>
+      </div>
     </div>
-  </div>
 
-  <!-- RESUMEN EJECUTIVO -->
-  <div class="resumen">
-    <div class="sec-title" style="margin-bottom:14px;">Resumen Ejecutivo</div>
+    <!-- RESUMEN EJECUTIVO -->
+    <div class="resumen">
+      <div class="resumen-header">
+        <div class="resumen-header-icon">${icoResumen}</div>
+        <span class="resumen-label">Resumen Ejecutivo</span>
+      </div>
 
-    <div class="res-fila">
-      <span class="concepto">Total Ingresos</span>
-      <span class="monto" style="color:#1A7A3A;">${f$(I.total)}</span>
-    </div>
-    <div class="res-fila">
-      <span class="concepto">Total Gastos</span>
-      <span class="monto rojo">${f$(G.total)}</span>
-    </div>
-    <hr class="res-sep">
-    <div class="utilidad-fila">
-      <span class="concepto">Utilidad Neta</span>
-      <span class="monto ${U >= 0 ? 'verde' : 'rojo'}">${f$(U)}</span>
-    </div>
-    <div class="margen-fila">
-      <span>Margen</span>
-      <span style="color:${M >= 0 ? '#1A7A3A' : '#C0392B'}">${fp(M)}</span>
-    </div>
-    <hr class="res-doble">
-  </div>
+      <div class="res-grid">
+        <div class="res-card">
+          <div class="res-card-label">Total Ingresos</div>
+          <div class="res-card-value verde">${f$(I.total)}</div>
+        </div>
+        <div class="res-card">
+          <div class="res-card-label">Total Gastos</div>
+          <div class="res-card-value rojo">${f$(G.total)}</div>
+        </div>
+      </div>
 
+      <div class="res-divider"></div>
+
+      <div class="utilidad-block">
+        <div class="utilidad-label-wrap">
+          <div class="utilidad-eyebrow">Resultado del Período</div>
+          <div class="utilidad-label">Utilidad Neta</div>
+          <div class="margen-pill">
+            Margen operativo
+            <strong style="color:${M >= 0 ? '#4ADE80' : '#FC8181'}">${fp(M)}</strong>
+          </div>
+        </div>
+        <div class="utilidad-value ${U >= 0 ? 'verde' : 'rojo'}">${f$(U)}</div>
+      </div>
+    </div>
+
+  </div><!-- /estado-body -->
 </div>`;
 
   div.innerHTML = html;
   const sl = document.getElementById('print-semana-lbl');
-  if (sl) sl.textContent = 'Balance — ' + texto;
+  if(sl) sl.textContent = 'Balance — ' + texto;
   const btn = document.getElementById('btn-imprimir-balance');
-  if (btn) btn.style.display = '';
-}
-
-function cap(s){
-  return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  if(btn) btn.style.display = '';
 }
 </script>
 </body>
