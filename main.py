@@ -19,10 +19,16 @@ DATABASE_URL = os.environ.get(
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-connection_pool = pool.ThreadedConnectionPool(2, 10, DATABASE_URL)
+try:
+    connection_pool = pool.ThreadedConnectionPool(2, 10, DATABASE_URL)
+except Exception as e:
+    print(f"Error conectando a DB: {e}")
+    connection_pool = None
 
 
 def get_conn():
+    if connection_pool is None:
+        raise RuntimeError("Sin conexión a la base de datos")
     conn = connection_pool.getconn()
     conn.cursor_factory = RealDictCursor
     return conn
