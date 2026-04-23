@@ -27,6 +27,28 @@ tfoot td:last-child{font-size:14px;}
 .frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
 .frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
 .preview-sem{background:#EEF2F7;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;color:#002855;margin-top:8px;min-height:36px;}
+@media (max-width:640px){
+  /* Controls — select ocupa toda la fila, ambos botones juntos en la siguiente */
+  .controls{flex-wrap:wrap;gap:8px;padding:10px 12px;}
+  .controls > div{flex:1 1 100%;}
+  .controls > div select{min-width:0;width:100%;}
+  .controls > .btn{flex:1;min-width:0;font-size:12px;padding:10px 6px;justify-content:center;}
+
+  /* Mini-stats — total inline y compacto + 4 contadores en grid de 4 columnas */
+  .mini-stats{flex-direction:column;align-items:stretch;gap:4px;padding:8px 12px;}
+  .mini-total{min-width:0;display:flex;align-items:baseline;gap:8px;}
+  .mini-total #counter-total{font-size:15px;}
+  .mini-total #counter-sub{font-size:10px;}
+  .mini-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+  .mini-nums > div{text-align:center;}
+  .mini-nums span{font-size:13px;}
+  .mini-nums small{font-size:9px;}
+
+  /* Pestañas — scroll horizontal en una sola fila, sin saltos de línea */
+  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex-shrink:0;white-space:nowrap;font-size:11px;padding:6px 12px;}
+}
 @media print{.controls,.tabs-wrap{display:none!important;}.tab-body{border-top:none!important;border-radius:0!important;}}
 </style>
 </head>
