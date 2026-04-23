@@ -44,6 +44,60 @@ select{min-width:300px;}
 .margen-fila span{margin-left:auto;font-weight:700;font-size:14px;color:rgba(255,255,255,.85);}
 .resumen .monto.verde{color:#4ADE80;}
 .resumen .monto.rojo{color:#FC8181;}
+@media (max-width:640px){
+  /* Estado general */
+  .estado{padding:18px 14px;}
+  .estado-header .titulo{font-size:18px;}
+
+  /* Sección Ingresos / Gastos: texto completo, truncado con ellipsis si no cabe */
+  .fila, .fila-sub, .fila-total{flex-wrap:nowrap;}
+  .fila .concepto, .fila-sub .concepto, .fila-total .concepto{
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    min-width:0; font-size:13px;
+  }
+  .fila .monto, .fila-sub .monto, .fila-total .monto{
+    flex-shrink:0; white-space:nowrap; min-width:auto; font-size:13px;
+    padding-left:8px; text-align:right;
+  }
+  .fila-total .monto{font-size:14px;}
+  .detalle{display:none;}
+
+  /* Bloque azul — Resumen Ejecutivo */
+  .resumen{padding:18px 14px;border-radius:10px;}
+
+  /* Título "RESUMEN EJECUTIVO" en una sola línea */
+  .resumen .sec-title{
+    white-space:nowrap; font-size:11px; letter-spacing:1.5px;
+    display:block; width:100%;
+  }
+
+  /* res-fila: si no caben en una línea → texto arriba, monto abajo */
+  .res-fila{flex-wrap:wrap; padding:6px 0;}
+  .res-fila .concepto{
+    white-space:normal; overflow:visible; text-overflow:clip;
+    flex:1 1 55%; min-width:0; font-size:13px;
+    color:rgba(255,255,255,.85);
+  }
+  .res-fila .monto{
+    flex-shrink:0; min-width:auto; font-size:14px;
+    white-space:nowrap; padding-left:8px; text-align:right;
+    color:#fff;
+  }
+
+  /* Utilidad Neta */
+  .utilidad-fila{flex-wrap:wrap; padding:10px 0 4px;}
+  .utilidad-fila .concepto{
+    white-space:normal; flex:1 1 100%; font-size:15px; margin-bottom:2px;
+  }
+  .utilidad-fila .monto{
+    flex:1 1 100%; font-size:22px; min-width:auto;
+    text-align:right; padding-left:0;
+  }
+
+  /* Margen */
+  .margen-fila{font-size:12px;}
+  .margen-fila span{font-size:13px;}
+}
 @media print{
   .estado{border:none!important;box-shadow:none!important;padding:0!important;}
   .resumen{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
