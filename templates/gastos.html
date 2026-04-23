@@ -4,60 +4,445 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gastos — Gastos Cadenas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-.main{padding:16px;max-width:1100px;margin:0 auto;}
-.controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid #E8EDF5;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,28,75,.06);}
-.controls label{font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;display:block;}
-.controls select{min-width:280px;}
-.btn-verde{background:#16A34A;color:#fff;}
-.btn:disabled{background:#C5D0E0;cursor:not-allowed;opacity:1;}
-.tabs-wrap{background:#fff;border:1px solid #E8EDF5;border-radius:12px 12px 0 0;padding:12px 14px 0;margin-bottom:0;}
-.tabs{display:flex;flex-wrap:wrap;gap:5px;}
-.tab{padding:7px 15px;border-radius:7px 7px 0 0;border:1.5px solid #D8E2F0;border-bottom:none;font-size:12px;font-weight:600;cursor:pointer;background:#F5F7FA;color:#64748B;transition:all .15s;font-family:'Inter',sans-serif;}
-.tab:hover{border-color:#002855;color:#002855;background:#fff;}
-.tab.active{background:#002855;color:#fff;border-color:#002855;}
-.tab-body{background:#fff;border:1.5px solid #E8EDF5;border-top:3px solid #FF6B00;border-radius:0 0 12px 12px;margin-bottom:14px;overflow:hidden;}
-th{text-align:left;}
-th:last-child{text-align:right;}
-td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
-td:first-child{font-weight:600;color:#002855;}
-tfoot td:last-child{font-size:14px;}
-.frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
-.frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
-.preview-sem{background:#EEF2F7;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;color:#002855;margin-top:8px;min-height:36px;}
-@media (max-width:640px){
-  /* Controls — select ocupa toda la fila, ambos botones juntos en la siguiente */
-  .controls{flex-wrap:wrap;gap:8px;padding:10px 12px;}
-  .controls > div{flex:1 1 100%;}
-  .controls > div select{min-width:0;width:100%;}
-  .controls > .btn{flex:1;min-width:0;font-size:12px;padding:10px 6px;justify-content:center;}
-
-  /* Mini-stats — total inline y compacto + 4 contadores en grid de 4 columnas */
-  .mini-stats{flex-direction:column;align-items:stretch;gap:4px;padding:8px 12px;}
-  .mini-total{min-width:0;display:flex;align-items:baseline;gap:8px;}
-  .mini-total #counter-total{font-size:15px;}
-  .mini-total #counter-sub{font-size:10px;}
-  .mini-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
-  .mini-nums > div{text-align:center;}
-  .mini-nums span{font-size:13px;}
-  .mini-nums small{font-size:9px;}
-
-  /* Pestañas — scroll horizontal en una sola fila, sin saltos de línea */
-  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none;}
-  .tabs::-webkit-scrollbar{display:none;}
-  .tab{flex-shrink:0;white-space:nowrap;font-size:11px;padding:6px 12px;}
+/* ══════════════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:    #002855;
+  --navy2:   #003A7A;
+  --orange:  #FF6B00;
+  --bg:      #F0F3F8;
+  --bg2:     #E6EBF4;
+  --card:    #FFFFFF;
+  --border:  #D8E2F0;
+  --text:    #0D1B2E;
+  --text2:   #4A5D75;
+  --text3:   #8A9BB0;
+  --green:   #16A34A;
+  --red:     #C0392B;
+  --font:    'Plus Jakarta Sans', system-ui, sans-serif;
 }
-@media print{.controls,.tabs-wrap{display:none!important;}.tab-body{border-top:none!important;border-radius:0!important;}}
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════════════════ */
+.topbar {
+  background: var(--navy);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  border-bottom: 3px solid var(--orange);
+  box-shadow: 0 4px 24px rgba(0,20,60,.28);
+}
+.topbar-logo-wrap { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.topbar-logo { height: 38px; width: auto; border-radius: 5px; object-fit: contain; }
+.topbar-brand { display: flex; flex-direction: column; line-height: 1.1; }
+.topbar-brand-name { font-size: 13px; font-weight: 800; color: #fff; letter-spacing: 2.5px; text-transform: uppercase; }
+.topbar-brand-sub  { font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+.topbar-title { flex: 1; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,.35); margin: 0; }
+nav { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+nav a { color: rgba(255,255,255,.6); text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 6px 11px; border-radius: 6px; transition: all .15s; white-space: nowrap; letter-spacing: .3px; }
+nav a:hover  { color: var(--orange); background: rgba(255,107,0,.1); }
+nav a.active { color: var(--orange); font-weight: 700; }
+.nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; cursor: pointer; background: none; border: none; padding: 8px; flex-shrink: 0; }
+.nav-toggle span { display: block; width: 22px; height: 2.5px; background: #fff; border-radius: 2px; }
+
+/* ══════════════════════════════════════════════════════════
+   PAGE HEADER
+══════════════════════════════════════════════════════════ */
+.page-header {
+  background: linear-gradient(135deg, var(--navy) 0%, #004190 100%);
+  padding: 32px 32px 56px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 32px;
+  background: var(--bg);
+  border-radius: 24px 24px 0 0;
+}
+.page-header-orb {
+  position: absolute; right: -40px; top: -30px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,107,0,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.page-header-inner { max-width: 1120px; margin: 0 auto; position: relative; z-index: 1; }
+.page-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; }
+.page-h1 { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -.3px; margin-bottom: 4px; }
+.page-desc { font-size: 13px; color: rgba(255,255,255,.45); font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════════════════════ */
+.main { padding: 0 32px 48px; max-width: 1120px; margin: 0 auto; }
+
+/* ══════════════════════════════════════════════════════════
+   CONTROLS BAR
+══════════════════════════════════════════════════════════ */
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 12px rgba(0,28,75,.06);
+}
+.controls > div { display: flex; flex-direction: column; gap: 5px; }
+label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+  margin-bottom: 0;
+}
+select {
+  min-width: 280px;
+  padding: 10px 36px 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A9BB0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-color: var(--bg);
+  box-shadow: 0 1px 3px rgba(0,20,60,.04);
+}
+select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,40,85,.1); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 18px; font-size: 12.5px; font-weight: 700;
+  border: none; border-radius: 9px; cursor: pointer;
+  transition: all .15s; white-space: nowrap; font-family: var(--font); letter-spacing: .3px;
+}
+.btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+.btn:disabled { background: #C5D0E0 !important; color: #7A8DA0 !important; cursor: not-allowed; opacity: 1; transform: none; box-shadow: none; }
+.btn-azul    { background: var(--navy);   color: #fff; box-shadow: 0 3px 10px rgba(0,40,85,.2); }
+.btn-verde   { background: var(--green);  color: #fff; box-shadow: 0 3px 10px rgba(22,163,74,.25); }
+.btn-naranja { background: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,107,0,.3); }
+.btn-gris    { background: #EEF2F7; color: var(--text2); border: 1.5px solid var(--border); }
+.btn-print   { background: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,107,0,.3); }
+
+/* ══════════════════════════════════════════════════════════
+   MINI STATS BAR
+══════════════════════════════════════════════════════════ */
+.mini-stats {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 10px rgba(0,28,75,.06);
+  flex-wrap: wrap;
+}
+.mini-total { flex: 1; min-width: 180px; }
+#counter-total {
+  font-size: 26px; font-weight: 800; color: var(--navy);
+  display: block; line-height: 1.1; letter-spacing: -.5px;
+  font-variant-numeric: tabular-nums;
+}
+#counter-sub { font-size: 11px; color: var(--text3); margin-top: 2px; display: block; }
+.mini-divider { width: 1px; height: 40px; background: var(--border); flex-shrink: 0; }
+.mini-nums { display: flex; gap: 0; }
+.mini-nums > div {
+  text-align: center; padding: 0 18px;
+  border-right: 1px solid var(--border);
+}
+.mini-nums > div:last-child { border-right: none; }
+.mini-nums span { font-size: 22px; font-weight: 800; color: var(--navy); display: block; line-height: 1.1; }
+.mini-nums small { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; display: block; }
+
+/* ══════════════════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════════════════ */
+.tabs-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px 14px 0 0;
+  padding: 14px 16px 0;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(0,28,75,.05);
+}
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.tab {
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  border: 1.5px solid transparent;
+  border-bottom: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text3);
+  transition: all .15s;
+  font-family: var(--font);
+  letter-spacing: .2px;
+  position: relative;
+  bottom: -1px;
+}
+.tab:hover { color: var(--navy); background: var(--bg2); }
+.tab.active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+.tab-body {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--orange);
+  border-radius: 0 0 14px 14px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,28,75,.07);
+}
+
+/* ══════════════════════════════════════════════════════════
+   TABLES
+══════════════════════════════════════════════════════════ */
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th {
+  background: var(--navy);
+  color: #fff;
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  white-space: nowrap;
+  font-family: var(--font);
+}
+th:last-child { text-align: right; }
+td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #EEF2F9;
+  vertical-align: middle;
+  color: var(--text);
+}
+td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+td:first-child { font-weight: 600; color: var(--navy); }
+tr:hover td { background: #F5F8FD; }
+tfoot td {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  border-top: none;
+  padding: 11px 14px;
+  font-size: 12.5px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+tfoot td:last-child { font-size: 13.5px; }
+
+/* ══════════════════════════════════════════════════════════
+   STAT PANEL (dentro de tabs)
+══════════════════════════════════════════════════════════ */
+.stat-panel-inner {
+  display: flex;
+  gap: 12px;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--navy) 0%, #004190 100%);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.stat-box-inner {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 16px 14px;
+  text-align: center;
+  color: #fff;
+}
+.stat-box-inner .stat-val { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.stat-box-inner .stat-lbl { font-size: 10px; opacity: .65; margin-top: 6px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; }
+
+/* ══════════════════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════════════════ */
+.empty {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PRINT BUTTON (dentro de tab)
+══════════════════════════════════════════════════════════ */
+.tab-print-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px 2px;
+}
+.tab-print-btn {
+  background: var(--orange); color: #fff; border: none;
+  border-radius: 7px; padding: 7px 18px; font-size: 12px;
+  font-weight: 700; cursor: pointer; font-family: var(--font);
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: 0 2px 8px rgba(255,107,0,.25);
+  transition: opacity .15s;
+}
+.tab-print-btn:hover { opacity: .88; }
+
+/* ══════════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════════ */
+.modal-bg {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,10,30,.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px;
+  width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,.22);
+  border: 1px solid var(--border);
+}
+.modal h3 { font-size: 16px; font-weight: 800; color: var(--navy); margin-bottom: 20px; }
+.frow { margin-bottom: 14px; }
+.frow label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; display: block; }
+.frow input, .frow select {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px; font-size: 13px; font-family: var(--font);
+  background: var(--bg); color: var(--text);
+  transition: border-color .15s;
+}
+.frow input:focus, .frow select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,40,85,.1); }
+.preview-sem {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 8px;
+  min-height: 40px;
+}
+.btns { display: flex; gap: 10px; margin-top: 20px; }
+
+/* ══════════════════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════════════════ */
+.print-logo { display: none; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 3px solid var(--navy); margin-bottom: 24px; }
+.print-logo img { height: 50px; width: auto; }
+.print-empresa { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+.print-semana  { font-size: 12px; color: #666; margin-top: 4px; }
+
+@media print {
+  .topbar, .page-header, .controls, .tabs-wrap, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .print-logo { display: flex !important; }
+  .tab-body { border-top: none !important; border-radius: 0 !important; box-shadow: none !important; }
+  th { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tfoot td { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .stat-panel-inner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .mini-stats { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .topbar { height: auto; padding: 10px 16px; flex-wrap: wrap; row-gap: 0; }
+  .topbar-title { flex: 1; font-size: 9px; letter-spacing: 2px; }
+  .nav-toggle { display: flex; }
+  nav { display: none; width: 100%; flex-direction: column; gap: 2px; padding: 6px 0 10px; order: 10; border-top: 1px solid rgba(255,255,255,.12); margin-top: 8px; }
+  .topbar.nav-open nav { display: flex; }
+  nav a { padding: 10px 8px; font-size: 14px; display: block; }
+
+  .page-header { padding: 24px 20px 48px; }
+  .page-h1 { font-size: 22px; }
+  .main { padding: 0 14px 40px; }
+
+  .controls { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+  .controls > div { flex: 1 1 100%; }
+  .controls select { min-width: 0; width: 100%; }
+  .controls > .btn { flex: 1; min-width: 0; font-size: 12px; padding: 10px 6px; justify-content: center; }
+
+  .mini-stats { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 14px; }
+  .mini-total { min-width: 0; }
+  #counter-total { font-size: 20px; }
+  .mini-divider { display: none; }
+  .mini-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .mini-nums > div { padding: 0 10px; border-right: 1px solid var(--border); }
+  .mini-nums span { font-size: 16px; }
+  .mini-nums small { font-size: 9px; }
+
+  .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; white-space: nowrap; font-size: 11px; padding: 7px 12px; }
+
+  .tab-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 540px; }
+  th, td { white-space: nowrap; padding: 8px 10px; }
+
+  .modal { width: calc(100vw - 24px); padding: 22px 16px; }
+  .stat-box-inner .stat-val { font-size: 26px; }
+}
 </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
-  <h1 class="topbar-title">GASTOS CADENAS</h1>
-  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
-    <nav>
+  <div class="topbar-logo-wrap">
+    <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo">
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">ATO</span>
+      <span class="topbar-brand-sub">Gastos Cadenas</span>
+    </div>
+  </div>
+  <h1 class="topbar-title">Sistema de Gestión</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+  <nav>
     <a href="/balance">Balance</a>
     <a href="/gastos" class="active">Gastos</a>
     <a href="/comisiones">Comisiones</a>
@@ -68,7 +453,27 @@ tfoot td:last-child{font-size:14px;}
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
-<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-tab-info"></div></div></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-orb"></div>
+  <div class="page-header-inner">
+    <div class="page-eyebrow">Nómina Operativa</div>
+    <h2 class="page-h1">Gastos por Cadena</h2>
+    <p class="page-desc">Sueldos, comisiones, impuestos y gastos indirectos por semana</p>
+  </div>
+</div>
+
+<!-- PRINT HEADER -->
+<div class="print-logo">
+  <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO">
+  <div>
+    <span class="print-empresa">GASTOS CADENAS</span>
+    <div class="print-semana" id="print-tab-info"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
 <div class="main">
 
   <!-- Controls -->
@@ -79,8 +484,14 @@ tfoot td:last-child{font-size:14px;}
         <option value="">Cargando semanas...</option>
       </select>
     </div>
-    <button class="btn btn-azul" onclick="abrirModalSemana()">+ Nueva semana</button>
-    <button class="btn btn-verde" id="btn-generar" onclick="generarGastos()" disabled>⚙ Generar / Actualizar</button>
+    <button class="btn btn-azul" onclick="abrirModalSemana()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nueva semana
+    </button>
+    <button class="btn btn-verde" id="btn-generar" onclick="generarGastos()" disabled>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Generar / Actualizar
+    </button>
   </div>
 
   <!-- Mini-stats bar -->
@@ -89,6 +500,7 @@ tfoot td:last-child{font-size:14px;}
       <span id="counter-total">$0.00</span>
       <small id="counter-sub">Sin datos — presiona "Generar / Actualizar"</small>
     </div>
+    <div class="mini-divider"></div>
     <div class="mini-nums">
       <div><span id="mn-proms">0</span><small>Promotores</small></div>
       <div><span id="mn-tiendas">0</span><small>Tiendas</small></div>
@@ -102,27 +514,29 @@ tfoot td:last-child{font-size:14px;}
     <div class="tabs" id="tabs-bar"></div>
   </div>
   <div class="tab-body">
-    <div id="tab-content"><div class="empty">Selecciona una semana y presiona "Generar / Actualizar".</div></div>
+    <div id="tab-content">
+      <div class="empty">Selecciona una semana y presiona "Generar / Actualizar".</div>
+    </div>
   </div>
 
-</div>
+</div><!-- /main -->
 
 <!-- Modal nueva semana -->
 <div class="modal-bg" id="modal-sem">
-<div class="modal">
-  <h3>Nueva semana</h3>
-  <div class="frow">
-    <label>Selecciona cualquier día de la semana</label>
-    <input type="date" id="ns-dia" oninput="actuPreview()">
-    <div class="preview-sem" id="ns-preview">—</div>
+  <div class="modal">
+    <h3>Nueva semana</h3>
+    <div class="frow">
+      <label>Selecciona cualquier día de la semana</label>
+      <input type="date" id="ns-dia" oninput="actuPreview()">
+      <div class="preview-sem" id="ns-preview">—</div>
+    </div>
+    <input type="hidden" id="ns-inicio">
+    <input type="hidden" id="ns-fin">
+    <div class="btns">
+      <button class="btn btn-azul" onclick="guardarSemana()">Crear semana</button>
+      <button class="btn btn-gris" onclick="cerrarModal()">Cancelar</button>
+    </div>
   </div>
-  <input type="hidden" id="ns-inicio">
-  <input type="hidden" id="ns-fin">
-  <div class="btns">
-    <button class="btn btn-azul" onclick="guardarSemana()">Crear semana</button>
-    <button class="btn btn-gris" onclick="cerrarModal()">Cancelar</button>
-  </div>
-</div>
 </div>
 
 <script>
@@ -147,8 +561,11 @@ const f$ = n => '$' + parseFloat(n||0).toLocaleString('es-MX', {minimumFractionD
 const d2 = n => n.toString().padStart(2,'0');
 
 function printBar() {
-  return `<div class="no-print" style="display:flex;justify-content:flex-end;padding:10px 14px 2px;">
-    <button onclick="imprimirTab()" style="background:#FF6B00;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:12px;font-weight:700;cursor:pointer;">🖨 Imprimir</button>
+  return `<div class="tab-print-bar no-print">
+    <button class="tab-print-btn" onclick="imprimirTab()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir
+    </button>
   </div>`;
 }
 
@@ -167,7 +584,7 @@ function formatSemana(fi, ff) {
 
 function getMondaySunday(dateStr) {
   const d   = new Date(dateStr + 'T12:00:00');
-  const dow = d.getDay() === 0 ? 6 : d.getDay() - 1;   // 0=lun … 6=dom
+  const dow = d.getDay() === 0 ? 6 : d.getDay() - 1;
   const lun = new Date(d); lun.setDate(d.getDate() - dow);
   const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
   const iso = x => x.toISOString().slice(0,10);
@@ -190,14 +607,13 @@ async function cargarSemanas() {
     sel.appendChild(opt);
   });
 
-  // Auto-seleccionar semana actual (lunes de hoy)
   const hoy = new Date().toISOString().slice(0,10);
   const {inicio} = getMondaySunday(hoy);
   for (const opt of sel.options) {
     if (opt.dataset.inicio === inicio) { sel.value = opt.value; break; }
   }
   if (sel.value) onSemanaChange();
-  else buildTabs();   // mostrar pestañas vacías
+  else buildTabs();
 }
 
 async function onSemanaChange() {
@@ -234,7 +650,8 @@ async function generarGastos() {
     if (!d.ok) { alert('Error: ' + d.error); return; }
     await onSemanaChange();
   } finally {
-    btn.disabled = false; btn.textContent = '⚙ Generar / Actualizar';
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Generar / Actualizar`;
   }
 }
 
@@ -272,6 +689,21 @@ function setTab(key, el) {
   renderTab();
 }
 
+// ── Helper: stat panel ───────────────────────────────────────────────────────
+function statPanel(count, total, labelCount, labelTotal) {
+  return `<div class="stat-panel-inner">
+    <div class="stat-box-inner" style="flex:1;">
+      <div class="stat-val">${count}</div>
+      <div class="stat-lbl">${labelCount}</div>
+    </div>
+    <div class="stat-box-inner" style="flex:2;">
+      <div class="stat-val" style="font-size:28px;">${f$(total)}</div>
+      <div class="stat-lbl">${labelTotal}</div>
+    </div>
+  </div>`;
+}
+
+// ── Render Resumen ───────────────────────────────────────────────────────────
 function renderResumen() {
   const cont = document.getElementById('tab-content');
 
@@ -307,7 +739,6 @@ function renderResumen() {
     });
   });
 
-  // Valores fijos — no vienen de gastos_semana
   orden.forEach(k => {
     const n = grupos[k].proms;
     grupos[k].isn_impuestos      = Math.round((61.54 * n + 417.05) * 100) / 100;
@@ -332,28 +763,19 @@ function renderResumen() {
 
   const ra = 'text-align:right;', ca = 'text-align:center;';
 
-  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
-    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:38px;font-weight:700;line-height:1;">${filas.length}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas</div>
-    </div>
-    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totales.total)}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total general</div>
-    </div>
-  </div>`;
-
-  html += `<div style="overflow-x:auto;"><table>
+  let html = printBar()
+    + statPanel(filas.length, totales.total, 'Tiendas', 'Total General')
+    + `<div style="overflow-x:auto;"><table>
     <thead><tr>
-      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Prom.</th>
       ${COLS.map(c => `<th style="${ra}">${c.label}</th>`).join('')}
     </tr></thead><tbody>`;
 
   filas.forEach(g => {
     html += `<tr>
       <td>${g.cadena}</td>
-      <td style="font-weight:400;">${g.tienda}</td>
-      <td style="${ca}font-weight:400;">${g.proms}</td>
+      <td style="font-weight:500;color:var(--text2);">${g.tienda}</td>
+      <td style="${ca}font-weight:500;color:var(--text2);">${g.proms}</td>
       ${COLS.map(c => `<td style="${ra}">${f$(g[c.key])}</td>`).join('')}
     </tr>`;
   });
@@ -367,6 +789,7 @@ function renderResumen() {
   cont.innerHTML = html;
 }
 
+// ── Render Vacaciones / Prima ────────────────────────────────────────────────
 function renderVacPrima() {
   const cont = document.getElementById('tab-content');
   const ra = 'text-align:right;', ca = 'text-align:center;';
@@ -385,71 +808,37 @@ function renderVacPrima() {
 
   orden.forEach(k => { grupos[k].total = Math.round((grupos[k].vac + grupos[k].pv) * 100) / 100; });
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
 
   const totVac   = conGasto.reduce((s,g) => Math.round((s + g.vac)   * 100) / 100, 0);
   const totPv    = conGasto.reduce((s,g) => Math.round((s + g.pv)    * 100) / 100, 0);
   const totTotal = Math.round((totVac + totPv) * 100) / 100;
 
-  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
-    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
-    </div>
-    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totTotal)}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — Vacaciones</div>
-    </div>
-  </div>`;
-
-  html += `<table>
-    <thead><tr>
-      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+  let html = printBar()
+    + statPanel(conGasto.length, totTotal, 'Tiendas con gasto', 'Total — Vacaciones')
+    + `<table><thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Prom.</th>
       <th style="${ra}">Vacaciones</th><th style="${ra}">Prima Vacacional</th><th style="${ra}">Total</th>
     </tr></thead><tbody>`;
 
   conGasto.forEach(g => {
-    html += `<tr>
-      <td>${g.cadena}</td>
-      <td style="font-weight:400;">${g.tienda}</td>
-      <td style="${ca}font-weight:400;">${g.proms}</td>
-      <td style="${ra}">${f$(g.vac)}</td>
-      <td style="${ra}">${f$(g.pv)}</td>
-      <td style="${ra}">${f$(g.total)}</td>
-    </tr>`;
+    html += `<tr><td>${g.cadena}</td><td style="font-weight:500;color:var(--text2);">${g.tienda}</td><td style="${ca}font-weight:500;">${g.proms}</td><td style="${ra}">${f$(g.vac)}</td><td style="${ra}">${f$(g.pv)}</td><td style="${ra}">${f$(g.total)}</td></tr>`;
   });
 
-  html += `</tbody><tfoot><tr>
-    <td colspan="3">SUBTOTAL — Vacaciones</td>
-    <td style="${ra}">${f$(totVac)}</td>
-    <td style="${ra}">${f$(totPv)}</td>
-    <td style="${ra}">${f$(totTotal)}</td>
-  </tr></tfoot></table>`;
+  html += `</tbody><tfoot><tr><td colspan="3">SUBTOTAL — Vacaciones</td><td style="${ra}">${f$(totVac)}</td><td style="${ra}">${f$(totPv)}</td><td style="${ra}">${f$(totTotal)}</td></tr></tfoot></table>`;
 
   if (sinGasto.length) {
-    html += `<table style="margin-top:0;border-top:none;">
-      <thead><tr>
-        <th colspan="6" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
-      </tr></thead><tbody>`;
+    html += `<table style="margin-top:0;border-top:none;"><thead><tr><th colspan="6" style="background:#EEF2F9;color:var(--text3);font-size:10px;letter-spacing:.5px;">SIN GASTO</th></tr></thead><tbody>`;
     sinGasto.forEach(g => {
-      html += `<tr>
-        <td style="color:#aaa;">${g.cadena}</td>
-        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
-        <td style="${ca}color:#aaa;">${g.proms}</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-      </tr>`;
+      html += `<tr><td style="color:var(--text3);">${g.cadena}</td><td style="font-weight:400;color:var(--text3);">${g.tienda}</td><td style="${ca}color:var(--text3);">${g.proms}</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td></tr>`;
     });
     html += `</tbody></table>`;
   }
-
   cont.innerHTML = html;
 }
 
+// ── Render ISN / Impuestos ───────────────────────────────────────────────────
 function renderIsnImpuestos() {
   const cont = document.getElementById('tab-content');
   const ra = 'text-align:right;', ca = 'text-align:center;';
@@ -457,85 +846,47 @@ function renderIsnImpuestos() {
   const grupos = {}, orden = [];
   detalleData.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
-    if (!grupos[key]) {
-      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, isn: 0, impuestos: 0 };
-      orden.push(key);
-    }
+    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, isn: 0, impuestos: 0 }; orden.push(key); }
     grupos[key].proms += 1;
   });
 
-  // ISN: $61.54 por promotor. Impuestos: $417.05 fijo por tienda (no viene de gastos_semana)
   orden.forEach(k => {
     grupos[k].isn       = Math.round(61.54 * grupos[k].proms * 100) / 100;
     grupos[k].impuestos = 417.05;
     grupos[k].total     = Math.round((grupos[k].isn + grupos[k].impuestos) * 100) / 100;
   });
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
 
   const totIsn       = conGasto.reduce((s,g) => Math.round((s + g.isn)       * 100) / 100, 0);
   const totImpuestos = conGasto.reduce((s,g) => Math.round((s + g.impuestos) * 100) / 100, 0);
   const totTotal     = Math.round((totIsn + totImpuestos) * 100) / 100;
 
-  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
-    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
-    </div>
-    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totTotal)}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — Impuestos</div>
-    </div>
-  </div>`;
-
-  html += `<table>
-    <thead><tr>
-      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+  let html = printBar()
+    + statPanel(conGasto.length, totTotal, 'Tiendas con gasto', 'Total — Impuestos')
+    + `<table><thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Prom.</th>
       <th style="${ra}">ISN</th><th style="${ra}">Impuestos</th><th style="${ra}">Total</th>
     </tr></thead><tbody>`;
 
   conGasto.forEach(g => {
-    html += `<tr>
-      <td>${g.cadena}</td>
-      <td style="font-weight:400;">${g.tienda}</td>
-      <td style="${ca}font-weight:400;">${g.proms}</td>
-      <td style="${ra}">${f$(g.isn)}</td>
-      <td style="${ra}">${f$(g.impuestos)}</td>
-      <td style="${ra}">${f$(g.total)}</td>
-    </tr>`;
+    html += `<tr><td>${g.cadena}</td><td style="font-weight:500;color:var(--text2);">${g.tienda}</td><td style="${ca}font-weight:500;">${g.proms}</td><td style="${ra}">${f$(g.isn)}</td><td style="${ra}">${f$(g.impuestos)}</td><td style="${ra}">${f$(g.total)}</td></tr>`;
   });
 
-  html += `</tbody><tfoot><tr>
-    <td colspan="3">SUBTOTAL — Impuestos</td>
-    <td style="${ra}">${f$(totIsn)}</td>
-    <td style="${ra}">${f$(totImpuestos)}</td>
-    <td style="${ra}">${f$(totTotal)}</td>
-  </tr></tfoot></table>`;
+  html += `</tbody><tfoot><tr><td colspan="3">SUBTOTAL — Impuestos</td><td style="${ra}">${f$(totIsn)}</td><td style="${ra}">${f$(totImpuestos)}</td><td style="${ra}">${f$(totTotal)}</td></tr></tfoot></table>`;
 
   if (sinGasto.length) {
-    html += `<table style="margin-top:0;border-top:none;">
-      <thead><tr>
-        <th colspan="6" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
-      </tr></thead><tbody>`;
+    html += `<table style="margin-top:0;border-top:none;"><thead><tr><th colspan="6" style="background:#EEF2F9;color:var(--text3);font-size:10px;letter-spacing:.5px;">SIN GASTO</th></tr></thead><tbody>`;
     sinGasto.forEach(g => {
-      html += `<tr>
-        <td style="color:#aaa;">${g.cadena}</td>
-        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
-        <td style="${ca}color:#aaa;">${g.proms}</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-      </tr>`;
+      html += `<tr><td style="color:var(--text3);">${g.cadena}</td><td style="font-weight:400;color:var(--text3);">${g.tienda}</td><td style="${ca}color:var(--text3);">${g.proms}</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td></tr>`;
     });
     html += `</tbody></table>`;
   }
-
   cont.innerHTML = html;
 }
 
+// ── Render Sueldos / Comisiones ──────────────────────────────────────────────
 function renderSueldosComisiones() {
   const cont = document.getElementById('tab-content');
   const ra = 'text-align:right;', ca = 'text-align:center;';
@@ -543,10 +894,7 @@ function renderSueldosComisiones() {
   const grupos = {}, orden = [];
   detalleData.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
-    if (!grupos[key]) {
-      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, sueldos: 0, comisiones: 0 };
-      orden.push(key);
-    }
+    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, sueldos: 0, comisiones: 0 }; orden.push(key); }
     grupos[key].proms      += 1;
     grupos[key].sueldos    = Math.round((grupos[key].sueldos    + (r.sueldo_semanal || 0)) * 100) / 100;
     grupos[key].comisiones = Math.round((grupos[key].comisiones + (r.comisiones     || 0)) * 100) / 100;
@@ -554,71 +902,37 @@ function renderSueldosComisiones() {
 
   orden.forEach(k => { grupos[k].total = Math.round((grupos[k].sueldos + grupos[k].comisiones) * 100) / 100; });
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
 
   const totSueldos    = conGasto.reduce((s,g) => Math.round((s + g.sueldos)    * 100) / 100, 0);
   const totComisiones = conGasto.reduce((s,g) => Math.round((s + g.comisiones) * 100) / 100, 0);
   const totTotal      = Math.round((totSueldos + totComisiones) * 100) / 100;
 
-  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
-    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
-    </div>
-    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(totTotal)}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — Sueldos y Comisiones</div>
-    </div>
-  </div>`;
-
-  html += `<table>
-    <thead><tr>
-      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th>
+  let html = printBar()
+    + statPanel(conGasto.length, totTotal, 'Tiendas con gasto', 'Total — Sueldos y Comisiones')
+    + `<table><thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Prom.</th>
       <th style="${ra}">Sueldos</th><th style="${ra}">Comisiones</th><th style="${ra}">Total</th>
     </tr></thead><tbody>`;
 
   conGasto.forEach(g => {
-    html += `<tr>
-      <td>${g.cadena}</td>
-      <td style="font-weight:400;">${g.tienda}</td>
-      <td style="${ca}font-weight:400;">${g.proms}</td>
-      <td style="${ra}">${f$(g.sueldos)}</td>
-      <td style="${ra}">${f$(g.comisiones)}</td>
-      <td style="${ra}">${f$(g.total)}</td>
-    </tr>`;
+    html += `<tr><td>${g.cadena}</td><td style="font-weight:500;color:var(--text2);">${g.tienda}</td><td style="${ca}font-weight:500;">${g.proms}</td><td style="${ra}">${f$(g.sueldos)}</td><td style="${ra}">${f$(g.comisiones)}</td><td style="${ra}">${f$(g.total)}</td></tr>`;
   });
 
-  html += `</tbody><tfoot><tr>
-    <td colspan="3">SUBTOTAL — Sueldos y Comisiones</td>
-    <td style="${ra}">${f$(totSueldos)}</td>
-    <td style="${ra}">${f$(totComisiones)}</td>
-    <td style="${ra}">${f$(totTotal)}</td>
-  </tr></tfoot></table>`;
+  html += `</tbody><tfoot><tr><td colspan="3">SUBTOTAL — Sueldos y Comisiones</td><td style="${ra}">${f$(totSueldos)}</td><td style="${ra}">${f$(totComisiones)}</td><td style="${ra}">${f$(totTotal)}</td></tr></tfoot></table>`;
 
   if (sinGasto.length) {
-    html += `<table style="margin-top:0;border-top:none;">
-      <thead><tr>
-        <th colspan="6" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
-      </tr></thead><tbody>`;
+    html += `<table style="margin-top:0;border-top:none;"><thead><tr><th colspan="6" style="background:#EEF2F9;color:var(--text3);font-size:10px;letter-spacing:.5px;">SIN GASTO</th></tr></thead><tbody>`;
     sinGasto.forEach(g => {
-      html += `<tr>
-        <td style="color:#aaa;">${g.cadena}</td>
-        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
-        <td style="${ca}color:#aaa;">${g.proms}</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-        <td style="${ra}color:#aaa;">$0.00</td>
-      </tr>`;
+      html += `<tr><td style="color:var(--text3);">${g.cadena}</td><td style="font-weight:400;color:var(--text3);">${g.tienda}</td><td style="${ca}color:var(--text3);">${g.proms}</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td></tr>`;
     });
     html += `</tbody></table>`;
   }
-
   cont.innerHTML = html;
 }
 
+// ── Render Tab genérico ──────────────────────────────────────────────────────
 function renderTab() {
   const cont = document.getElementById('tab-content');
   if (!detalleData.length) {
@@ -632,20 +946,15 @@ function renderTab() {
   if (tabActivo === 'vac_prima')          { renderVacPrima(); return; }
 
   const label = TABS.find(t => t.key === tabActivo)?.label || tabActivo;
+  const ra = 'text-align:right;', ca = 'text-align:center;';
 
-  // Agrupar por Cadena + Tienda
-  const grupos = {};
-  const orden  = [];
+  const grupos = {}, orden = [];
   detalleData.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
-    if (!grupos[key]) {
-      grupos[key] = { cadena: r.cadena, tienda: r.tienda, monto: 0, proms: 0 };
-      orden.push(key);
-    }
+    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, monto: 0, proms: 0 }; orden.push(key); }
     grupos[key].proms += 1;
   });
 
-  // Valores fijos por tienda o por promotor — no vienen de gastos_semana
   if (tabActivo === 'gastos_indirectos') {
     orden.forEach(k => { grupos[k].monto = 274.00; });
   } else if (tabActivo === 'fondo_contingencia') {
@@ -657,61 +966,29 @@ function renderTab() {
     });
   }
 
-  // Separar con gasto vs sin gasto, ordenar por cadena+tienda
-  const conGasto  = orden.map(k => grupos[k]).filter(g => g.monto > 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto  = orden.map(k => grupos[k]).filter(g => g.monto === 0)
-                        .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.monto > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.monto === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const total    = conGasto.reduce((s,g) => Math.round((s + g.monto) * 100) / 100, 0);
 
-  const total = conGasto.reduce((s,g) => Math.round((s + g.monto) * 100) / 100, 0);
-
-  // Tarjetas de resumen
-  let html = printBar() + `<div style="display:flex;gap:12px;padding:16px;background:linear-gradient(135deg,#002855 0%,#003875 100%);">
-    <div style="flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:38px;font-weight:700;line-height:1;">${conGasto.length}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Tiendas con gasto</div>
-    </div>
-    <div style="flex:2;background:rgba(255,255,255,.15);border-radius:10px;padding:18px 12px;text-align:center;color:#fff;">
-      <div style="font-size:34px;font-weight:700;line-height:1;letter-spacing:-1px;">${f$(total)}</div>
-      <div style="font-size:11px;opacity:.75;margin-top:6px;text-transform:uppercase;letter-spacing:.6px;">Total — ${label}</div>
-    </div>
-  </div>`;
-
-  html += `<table>
-    <thead><tr>
-      <th>Cadena</th><th>Tienda</th><th>Promotores</th><th>${label}</th>
+  let html = printBar()
+    + statPanel(conGasto.length, total, 'Tiendas con gasto', `Total — ${label}`)
+    + `<table><thead><tr>
+      <th>Cadena</th><th>Tienda</th><th style="${ca}">Promotores</th><th style="${ra}">${label}</th>
     </tr></thead><tbody>`;
 
   conGasto.forEach(g => {
-    html += `<tr>
-      <td>${g.cadena}</td>
-      <td style="font-weight:400;">${g.tienda}</td>
-      <td style="text-align:center;font-weight:400;">${g.proms}</td>
-      <td>${f$(g.monto)}</td>
-    </tr>`;
+    html += `<tr><td>${g.cadena}</td><td style="font-weight:500;color:var(--text2);">${g.tienda}</td><td style="${ca}font-weight:500;">${g.proms}</td><td style="${ra}">${f$(g.monto)}</td></tr>`;
   });
 
-  html += `</tbody><tfoot><tr>
-    <td colspan="3">SUBTOTAL — ${label}</td>
-    <td>${f$(total)}</td>
-  </tr></tfoot></table>`;
+  html += `</tbody><tfoot><tr><td colspan="3">SUBTOTAL — ${label}</td><td style="${ra}">${f$(total)}</td></tr></tfoot></table>`;
 
   if (sinGasto.length) {
-    html += `<table style="margin-top:0;border-top:none;">
-      <thead><tr>
-        <th colspan="4" style="background:#f0f0f0;color:#999;font-size:10px;letter-spacing:.5px;">SIN GASTO</th>
-      </tr></thead><tbody>`;
+    html += `<table style="margin-top:0;border-top:none;"><thead><tr><th colspan="4" style="background:#EEF2F9;color:var(--text3);font-size:10px;letter-spacing:.5px;">SIN GASTO</th></tr></thead><tbody>`;
     sinGasto.forEach(g => {
-      html += `<tr>
-        <td style="color:#aaa;">${g.cadena}</td>
-        <td style="font-weight:400;color:#aaa;">${g.tienda}</td>
-        <td style="text-align:center;color:#aaa;">${g.proms}</td>
-        <td style="color:#aaa;">$0.00</td>
-      </tr>`;
+      html += `<tr><td style="color:var(--text3);">${g.cadena}</td><td style="font-weight:400;color:var(--text3);">${g.tienda}</td><td style="${ca}color:var(--text3);">${g.proms}</td><td style="${ra}color:var(--text3);">$0.00</td></tr>`;
     });
     html += `</tbody></table>`;
   }
-
   cont.innerHTML = html;
 }
 
@@ -744,7 +1021,6 @@ async function guardarSemana() {
   if (d.ok) {
     cerrarModal();
     await cargarSemanas();
-    // Auto-seleccionar la semana recién creada
     document.getElementById('sel-semana').value = d.id;
     await onSemanaChange();
   } else {
