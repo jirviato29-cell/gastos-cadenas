@@ -369,10 +369,34 @@ tfoot td {
   .controls { flex-direction: column; align-items: stretch; }
   .controls select, select { min-width: 0; width: 100%; }
 
-  /* Balance page */
+  /* Balance page — filas siempre en una línea */
   .estado { padding: 20px 14px; }
   .resumen { padding: 20px 14px; }
-  .monto { min-width: 90px; font-size: 13px; }
-  .fila, .fila-sub { font-size: 13px; }
-  .utilidad-fila .monto { font-size: 22px; }
+
+  .fila, .fila-sub, .fila-total, .res-fila, .utilidad-fila, .margen-fila {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: baseline;
+  }
+  .concepto {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
+  .detalle { display: none; }   /* ocultar "(X promotores)" en mobile — libera espacio */
+  .monto {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-width: auto;
+    font-size: 13px;
+    text-align: right;
+    padding-left: 8px;
+  }
+  .fila-total .monto { font-size: 14px; }
+  .utilidad-fila .concepto { font-size: 15px; }
+  .utilidad-fila .monto { font-size: 20px; }
+  .margen-fila span { font-size: 13px; }
 }
