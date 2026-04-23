@@ -20,6 +20,11 @@ tfoot td:nth-child(4),tfoot td:nth-child(5),tfoot td:nth-child(6),tfoot td:nth-c
 .tr-cadena td{background:#EEF2F7;font-weight:700;}
 .pos{color:#16A34A;font-weight:700;}
 .neg{color:#DC2626;font-weight:700;}
+@media print{
+  .card > div:first-child, .stats { display:none !important; }
+  .print-bar-wrap { display:none !important; }
+  .card { box-shadow:none !important; border:none !important; }
+}
 </style>
 </head>
 <body>
@@ -38,7 +43,10 @@ tfoot td:nth-child(4),tfoot td:nth-child(5),tfoot td:nth-child(6),tfoot td:nth-c
     <a href="/resumen" class="active">Resumen</a>
   </nav>
 </div>
-<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><span class="print-empresa">GASTOS CADENAS</span></div>
+<div class="print-logo">
+  <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;">
+  <div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-semana-lbl"></div></div>
+</div>
 <div class="main">
   <div class="card">
     <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
@@ -69,6 +77,9 @@ tfoot td:nth-child(4),tfoot td:nth-child(5),tfoot td:nth-child(6),tfoot td:nth-c
     </div>
 
     <div class="spinner" id="spinner">Cargando resumen...</div>
+    <div class="print-bar-wrap no-print" id="print-bar" style="display:none;justify-content:flex-end;margin-bottom:8px;">
+      <button class="btn btn-naranja" onclick="window.print()">🖨 Imprimir PDF</button>
+    </div>
     <div id="tabla-container">
       <div class="empty">Selecciona una semana para ver el resumen</div>
     </div>
@@ -83,6 +94,7 @@ async function cargarResumen() {
   if (!sid) {
     document.getElementById('tabla-container').innerHTML = '<div class="empty">Selecciona una semana para ver el resumen</div>';
     document.getElementById('stats').style.display = 'none';
+    document.getElementById('print-bar').style.display = 'none';
     return;
   }
   document.getElementById('spinner').style.display = 'block';
@@ -136,6 +148,12 @@ async function cargarResumen() {
   </tr></tfoot></table></div>`;
 
   document.getElementById('tabla-container').innerHTML = html;
+
+  // Botón imprimir + label semana
+  const sel = document.getElementById('sel-semana');
+  document.getElementById('print-semana-lbl').textContent =
+    'Resumen — ' + sel.options[sel.selectedIndex].text;
+  document.getElementById('print-bar').style.display = 'flex';
 
   // Stats cards
   document.getElementById('st-gastos').textContent = f$(totalGastos);
