@@ -4,31 +4,206 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Telcel — Gastos Cadenas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-.main{padding:16px;max-width:900px;margin:0 auto;}
-select{width:auto;}
-.drop-zone{border:2.5px dashed #A3BBDF;border-radius:10px;padding:36px;text-align:center;color:#94A3B8;cursor:pointer;transition:border-color .2s,background .2s;margin:12px 0;}
-.drop-zone:hover,.drop-zone.over{border-color:#FF6B00;background:#FFF8F5;}
-.drop-zone input[type=file]{display:none;}
-.drop-zone .icon{font-size:36px;margin-bottom:8px;}
-.drop-zone .sub{font-size:12px;margin-top:4px;}
-.result-box{border-radius:10px;padding:14px;margin-top:12px;display:none;}
-.result-ok{background:#DCFCE7;border:1.5px solid #16A34A;color:#14532D;}
-.result-err{background:#FEE2E2;border:1.5px solid #F87171;color:#7F1D1D;}
-.prog{display:none;text-align:center;padding:16px;color:#002855;font-size:13px;}
-th:last-child{text-align:right;}
-td:last-child{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;}
-tfoot td{background:#EEF2F7;color:#1A202C;font-weight:700;border-top:2px solid #002855;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:   #002855;
+  --orange: #FF6B00;
+  --bg:     #F0F3F8;
+  --bg2:    #E6EBF4;
+  --card:   #FFFFFF;
+  --border: #D8E2F0;
+  --text:   #0D1B2E;
+  --text2:  #4A5D75;
+  --text3:  #8A9BB0;
+  --green:  #16A34A;
+  --red:    #C0392B;
+  --font:   'Plus Jakarta Sans', system-ui, sans-serif;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+
+/* ── Topbar ── */
+.topbar { background: var(--navy); height: 64px; display: flex; align-items: center; padding: 0 28px; position: sticky; top: 0; z-index: 200; border-bottom: 3px solid var(--orange); box-shadow: 0 4px 24px rgba(0,20,60,.28); }
+.topbar-logo-wrap { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.topbar-logo { height: 38px; width: auto; border-radius: 5px; object-fit: contain; }
+.topbar-brand { display: flex; flex-direction: column; line-height: 1.1; }
+.topbar-brand-name { font-size: 13px; font-weight: 800; color: #fff; letter-spacing: 2.5px; text-transform: uppercase; }
+.topbar-brand-sub  { font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+.topbar-title { flex: 1; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,.35); margin: 0; }
+nav { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+nav a { color: rgba(255,255,255,.6); text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 6px 11px; border-radius: 6px; transition: all .15s; white-space: nowrap; }
+nav a:hover  { color: var(--orange); background: rgba(255,107,0,.1); }
+nav a.active { color: var(--orange); font-weight: 700; }
+.nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; cursor: pointer; background: none; border: none; padding: 8px; flex-shrink: 0; }
+.nav-toggle span { display: block; width: 22px; height: 2.5px; background: #fff; border-radius: 2px; }
+
+/* ── Page Header ── */
+.page-header { background: linear-gradient(135deg, var(--navy) 0%, #004190 100%); padding: 32px 32px 56px; position: relative; overflow: hidden; }
+.page-header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 32px; background: var(--bg); border-radius: 24px 24px 0 0; }
+.page-header-orb { position: absolute; right: -40px; top: -30px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,0,.15) 0%, transparent 70%); pointer-events: none; }
+.page-header-inner { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+.page-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; }
+.page-h1 { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -.3px; margin-bottom: 4px; }
+.page-desc { font-size: 13px; color: rgba(255,255,255,.45); font-weight: 500; }
+
+/* ── Main ── */
+.main { padding: 0 32px 48px; max-width: 900px; margin: 0 auto; }
+
+/* ── Upload card ── */
+.upload-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,28,75,.07);
+  margin-bottom: 16px;
+}
+.upload-card-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--bg2);
+}
+.upload-card-title { font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+.upload-card-hint {
+  font-size: 11.5px; color: var(--text3); line-height: 1.6;
+  background: var(--bg2); border-radius: 8px; padding: 10px 14px; margin-top: 10px;
+  border-left: 3px solid var(--border);
+}
+.upload-card-hint strong { color: var(--text2); }
+.upload-card-body { padding: 20px 24px; }
+
+/* Week selector */
+label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 5px; }
+select {
+  padding: 10px 36px 10px 14px; border: 1.5px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-family: var(--font); background: var(--bg); color: var(--text);
+  transition: border-color .15s; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A9BB0' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; background-color: var(--bg);
+}
+select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,40,85,.1); }
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin: 16px 0;
+  background: var(--bg);
+}
+.drop-zone:hover, .drop-zone.over {
+  border-color: var(--orange);
+  background: #FFF8F5;
+}
+.drop-zone input[type=file] { display: none; }
+.drop-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--navy) 0%, #004190 100%);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}
+.drop-icon svg { opacity: .9; }
+.drop-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.drop-sub { font-size: 12px; color: var(--text3); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; font-size: 12.5px; font-weight: 700; border: none; border-radius: 9px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font); letter-spacing: .3px; }
+.btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+.btn:disabled { background: #C5D0E0 !important; color: #7A8DA0 !important; cursor: not-allowed; opacity: 1; transform: none; box-shadow: none; }
+.btn-azul { background: var(--navy); color: #fff; box-shadow: 0 3px 10px rgba(0,40,85,.2); }
+.btn-gris  { background: var(--bg2); color: var(--text2); border: 1.5px solid var(--border); }
+
+.btn-row { display: flex; gap: 10px; align-items: center; }
+
+/* Progress */
+.prog { display: none; align-items: center; gap: 10px; padding: 14px 0; color: var(--navy); font-size: 13px; font-weight: 600; }
+.prog-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+/* Result box */
+.result-box { border-radius: 10px; padding: 14px 16px; margin-top: 14px; display: none; font-size: 13px; font-weight: 600; }
+.result-ok  { background: #DCFCE7; border: 1.5px solid #86EFAC; color: #14532D; }
+.result-err { background: #FEE2E2; border: 1.5px solid #FCA5A5; color: #7F1D1D; }
+
+/* ── Result table card ── */
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,28,75,.07);
+  display: none;
+}
+.result-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--bg2); flex-wrap: wrap; gap: 10px;
+}
+.result-card-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+.result-card-sub   { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.print-btn { background: var(--orange); color: #fff; border: none; border-radius: 7px; padding: 7px 18px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(255,107,0,.25); }
+.print-btn:hover { opacity: .88; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th { background: var(--navy); color: #fff; padding: 11px 14px; text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+th:last-child { text-align: right; }
+td { padding: 9px 14px; border-bottom: 1px solid #EEF2F9; vertical-align: middle; }
+td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--navy); }
+td:first-child { font-weight: 700; color: var(--navy); }
+tr:hover td { background: #F5F8FD; }
+tfoot td { background: var(--bg2); color: var(--text); font-weight: 700; border-top: 2px solid var(--navy); padding: 11px 14px; }
+tfoot td:last-child { text-align: right; font-size: 13.5px; color: var(--navy); }
+
+/* Print */
+.print-logo { display: none; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 3px solid var(--navy); margin-bottom: 24px; }
+.print-logo img { height: 50px; }
+.print-empresa { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+
+@media print {
+  .topbar, .page-header, .upload-card, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .print-logo { display: flex !important; }
+  .result-card { box-shadow: none !important; border: 1px solid #ddd !important; display: block !important; }
+  th { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 720px) {
+  .topbar { height: auto; padding: 10px 16px; flex-wrap: wrap; row-gap: 0; }
+  .topbar-title { flex: 1; font-size: 9px; letter-spacing: 2px; }
+  .nav-toggle { display: flex; }
+  nav { display: none; width: 100%; flex-direction: column; gap: 2px; padding: 6px 0 10px; order: 10; border-top: 1px solid rgba(255,255,255,.12); margin-top: 8px; }
+  .topbar.nav-open nav { display: flex; }
+  nav a { padding: 10px 8px; font-size: 14px; display: block; }
+  .page-header { padding: 24px 20px 48px; }
+  .page-h1 { font-size: 22px; }
+  .main { padding: 0 14px 40px; }
+  .upload-card-header, .upload-card-body { padding: 16px; }
+  select { width: 100%; }
+  .btn-row { flex-wrap: wrap; }
+}
 </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
-  <h1 class="topbar-title">GASTOS CADENAS</h1>
-  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
-    <nav>
+  <div class="topbar-logo-wrap">
+    <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo">
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">ATO</span>
+      <span class="topbar-brand-sub">Gastos Cadenas</span>
+    </div>
+  </div>
+  <h1 class="topbar-title">Sistema de Gestión</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+  <nav>
     <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
     <a href="/comisiones">Comisiones</a>
@@ -39,51 +214,113 @@ tfoot td{background:#EEF2F7;color:#1A202C;font-weight:700;border-top:2px solid #
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
-<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><span class="print-empresa">GASTOS CADENAS</span></div>
-<div class="main">
-  <div class="card">
-    <h2>Cargar comisiones Telcel (.xlsx)</h2>
-    <p style="font-size:12px;color:#888;margin-bottom:14px;">
-      El archivo debe tener columnas: <strong>subclave</strong> (o fzavta), <strong>producto</strong>, <strong>comis</strong> (o comision/importe).<br>
-      Al subir reemplaza todos los pagos previos de esa semana.
-    </p>
-    <div style="margin-bottom:12px;">
-      <label>Semana</label>
-      <select id="sel-semana" style="max-width:360px;">
-        <option value="">— Selecciona semana —</option>
-        {% for s in semanas %}
-        <option value="{{ s.id }}">{{ s.fecha_inicio }} al {{ s.fecha_fin }}</option>
-        {% endfor %}
-      </select>
-    </div>
 
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
-         ondragover="ev(event,'over')" ondragleave="ev(event,'')" ondrop="drop(event)">
-      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="archivoSeleccionado(this.files[0])">
-      <div class="icon">📊</div>
-      <div id="drop-label">Arrastra el archivo Excel aquí o haz clic para seleccionar</div>
-      <div class="sub" id="drop-sub">Formatos: .xlsx, .xls</div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="btn btn-azul" id="btn-subir" onclick="subir()" disabled>Subir y procesar</button>
-      <button class="btn" style="background:#EEF2F7;border:1px solid #D0D9E8;color:#444;" onclick="limpiar()">Limpiar</button>
-    </div>
-    <div class="prog" id="prog">Procesando archivo...</div>
-    <div class="result-box" id="result-box"></div>
-  </div>
-
-  <div class="card" id="tabla-card" style="display:none;">
-    <h2>Resumen por subclave — <span id="tbl-semana-lbl"></span></h2>
-    <div style="overflow-x:auto;">
-    <table id="tbl-result">
-      <thead id="tbl-head"></thead>
-      <tbody id="tbl-body"></tbody>
-      <tfoot id="tbl-foot"></tfoot>
-    </table>
-    </div>
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-orb"></div>
+  <div class="page-header-inner">
+    <div class="page-eyebrow">Importación de Datos</div>
+    <h2 class="page-h1">Carga de Archivo Telcel</h2>
+    <p class="page-desc">Sube el reporte semanal de comisiones en formato .xlsx o .xls</p>
   </div>
 </div>
+
+<!-- PRINT HEADER -->
+<div class="print-logo">
+  <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO">
+  <span class="print-empresa">GASTOS CADENAS — Telcel</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- Upload card -->
+  <div class="upload-card">
+    <div class="upload-card-header">
+      <div class="upload-card-title">Importar comisiones Telcel</div>
+      <div class="upload-card-hint">
+        El archivo debe contener las columnas: <strong>subclave</strong> (o fzavta), <strong>producto</strong>, <strong>comis</strong> (o comision / importe).<br>
+        Al subir reemplaza todos los pagos previos de esa semana.
+      </div>
+    </div>
+    <div class="upload-card-body">
+
+      <!-- Semana -->
+      <div style="margin-bottom:16px;">
+        <label>Semana</label>
+        <select id="sel-semana" style="max-width:360px;">
+          <option value="">— Selecciona semana —</option>
+          {% for s in semanas %}
+          <option value="{{ s.id }}">{{ s.fecha_inicio }} al {{ s.fecha_fin }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="drop-zone" id="drop-zone"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="ev(event,'over')"
+           ondragleave="ev(event,'')"
+           ondrop="drop(event)">
+        <input type="file" id="file-input" accept=".xlsx,.xls" onchange="archivoSeleccionado(this.files[0])">
+        <div class="drop-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="12" x2="12" y2="18"/>
+            <polyline points="9 15 12 12 15 15"/>
+          </svg>
+        </div>
+        <div class="drop-title" id="drop-label">Arrastra el archivo Excel aquí o haz clic para seleccionar</div>
+        <div class="drop-sub" id="drop-sub">Formatos aceptados: .xlsx, .xls</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-row">
+        <button class="btn btn-azul" id="btn-subir" onclick="subir()" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Subir y procesar
+        </button>
+        <button class="btn btn-gris" onclick="limpiar()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Limpiar
+        </button>
+      </div>
+
+      <!-- Progress -->
+      <div class="prog" id="prog">
+        <div class="prog-dot"></div>
+        Procesando archivo...
+      </div>
+
+      <!-- Result -->
+      <div class="result-box" id="result-box"></div>
+
+    </div>
+  </div>
+
+  <!-- Result table -->
+  <div class="result-card" id="tabla-card">
+    <div class="result-card-header">
+      <div>
+        <div class="result-card-title">Resumen por subclave — <span id="tbl-semana-lbl" style="font-weight:500;color:var(--text2);"></span></div>
+        <div class="result-card-sub">Datos importados correctamente</div>
+      </div>
+      <button class="print-btn no-print" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir PDF
+      </button>
+    </div>
+    <div class="table-wrap">
+      <table id="tbl-result">
+        <thead id="tbl-head"></thead>
+        <tbody id="tbl-body"></tbody>
+        <tfoot id="tbl-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
 
 <script>
 let archivoActual = null;
@@ -103,20 +340,23 @@ function drop(e) {
 function archivoSeleccionado(f) {
   if (!f) return;
   archivoActual = f;
-  document.getElementById('drop-label').textContent = '📄 ' + f.name;
-  document.getElementById('drop-sub').textContent = (f.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('drop-label').textContent = f.name;
+  document.getElementById('drop-sub').textContent = (f.size / 1024).toFixed(1) + ' KB — listo para subir';
   document.getElementById('btn-subir').disabled = false;
   document.getElementById('result-box').style.display = 'none';
+  // Update drop icon to show file selected
+  document.querySelector('.drop-icon').style.background = 'linear-gradient(135deg,#0E7C45 0%,#16A34A 100%)';
 }
 
 function limpiar() {
   archivoActual = null;
   document.getElementById('drop-label').textContent = 'Arrastra el archivo Excel aquí o haz clic para seleccionar';
-  document.getElementById('drop-sub').textContent = 'Formatos: .xlsx, .xls';
+  document.getElementById('drop-sub').textContent = 'Formatos aceptados: .xlsx, .xls';
   document.getElementById('file-input').value = '';
   document.getElementById('btn-subir').disabled = true;
   document.getElementById('result-box').style.display = 'none';
   document.getElementById('tabla-card').style.display = 'none';
+  document.querySelector('.drop-icon').style.background = 'linear-gradient(135deg,var(--navy) 0%,#004190 100%)';
 }
 
 async function subir() {
@@ -126,7 +366,7 @@ async function subir() {
 
   const btn = document.getElementById('btn-subir');
   btn.disabled = true;
-  document.getElementById('prog').style.display = 'block';
+  document.getElementById('prog').style.display = 'flex';
   document.getElementById('result-box').style.display = 'none';
 
   const fd = new FormData();
@@ -139,7 +379,7 @@ async function subir() {
     const box = document.getElementById('result-box');
     if (d.ok) {
       box.className = 'result-box result-ok';
-      box.innerHTML = `✅ Archivo procesado — <strong>${d.filas}</strong> filas importadas.`;
+      box.innerHTML = `✅ Archivo procesado correctamente — <strong>${d.filas}</strong> filas importadas.`;
       box.style.display = 'block';
       mostrarTabla(d.resumen, d.conceptos, sid);
     } else {
@@ -162,18 +402,16 @@ function mostrarTabla(resumen, conceptos, sid) {
   const sel = document.getElementById('sel-semana');
   const lbl = sel.options[sel.selectedIndex]?.text || '';
   document.getElementById('tbl-semana-lbl').textContent = lbl;
+
   const f$ = n => parseFloat(n||0) === 0 ? '' :
     '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
   const fT = n => '$' + parseFloat(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-  // Encabezado dinámico
-  const colSpanFijo = 3;
   let headHtml = '<tr><th>Subclave</th><th>Tienda</th><th>Cadena</th>';
-  conceptos.forEach(c => { headHtml += `<th>${c}</th>`; });
+  conceptos.forEach(c => { headHtml += `<th style="text-align:right;">${c}</th>`; });
   headHtml += '<th>Total</th></tr>';
   document.getElementById('tbl-head').innerHTML = headHtml;
 
-  // Totales por columna
   const totConceptos = {};
   conceptos.forEach(c => { totConceptos[c] = 0; });
   let totalGeneral = 0;
@@ -182,21 +420,20 @@ function mostrarTabla(resumen, conceptos, sid) {
   resumen.forEach(r => {
     totalGeneral += r.total;
     const tiendaLbl = r.tienda === 'Sin tienda asignada'
-      ? '<span style="color:#E74C3C;font-size:11px;">Sin tienda asignada</span>'
+      ? `<span style="color:var(--red);font-size:11px;font-weight:600;">Sin tienda asignada</span>`
       : r.tienda;
-    bodyHtml += `<tr><td><strong>${r.subclave}</strong></td><td>${tiendaLbl}</td><td>${r.cadena || ''}</td>`;
+    bodyHtml += `<tr><td>${r.subclave}</td><td style="font-weight:500;color:var(--text2);">${tiendaLbl}</td><td style="color:var(--text2);">${r.cadena||''}</td>`;
     conceptos.forEach(c => {
       const v = r.conceptos[c] || 0;
       totConceptos[c] += v;
-      bodyHtml += `<td>${f$(v)}</td>`;
+      bodyHtml += `<td style="text-align:right;">${f$(v)}</td>`;
     });
-    bodyHtml += `<td style="font-weight:700;">${fT(r.total)}</td></tr>`;
+    bodyHtml += `<td>${fT(r.total)}</td></tr>`;
   });
   document.getElementById('tbl-body').innerHTML = bodyHtml;
 
-  // Fila de totales
-  let footHtml = `<tr><td colspan="${colSpanFijo}"><strong>TOTAL</strong></td>`;
-  conceptos.forEach(c => { footHtml += `<td>${fT(totConceptos[c])}</td>`; });
+  let footHtml = `<tr><td colspan="3">TOTAL</td>`;
+  conceptos.forEach(c => { footHtml += `<td style="text-align:right;">${fT(totConceptos[c])}</td>`; });
   footHtml += `<td>${fT(totalGeneral)}</td></tr>`;
   document.getElementById('tbl-foot').innerHTML = footHtml;
 
