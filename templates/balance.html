@@ -44,7 +44,27 @@ select{min-width:300px;}
 .margen-fila span{margin-left:auto;font-weight:700;font-size:14px;color:rgba(255,255,255,.85);}
 .resumen .monto.verde{color:#4ADE80;}
 .resumen .monto.rojo{color:#FC8181;}
-@media print{.estado{border:none!important;box-shadow:none!important;padding:0!important;}.resumen{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+@media print{
+  .estado{border:none!important;box-shadow:none!important;padding:0!important;}
+  .resumen{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* Filas más compactas al imprimir */
+  .fila{padding:2px 0;font-size:12px;}
+  .fila-sub{padding:1px 0 1px 20px;font-size:11.5px;}
+  .fila-total{padding:6px 0 4px;font-size:13px;}
+  .concepto{flex:1;}
+  .monto{min-width:120px;text-align:right;}
+  .fila-total .monto{font-size:13px;}
+  .seccion{margin-bottom:16px;}
+  .sec-title{margin-bottom:8px;padding-bottom:4px;font-size:12px;}
+  .linea-sep{margin:4px 0;}
+  .res-fila{padding:4px 0;font-size:12px;}
+  .res-fila .monto{min-width:120px;font-size:12px;}
+  .utilidad-fila{padding:8px 0 4px;}
+  .utilidad-fila .concepto{font-size:14px;}
+  .utilidad-fila .monto{font-size:20px;min-width:120px;}
+  .estado-header{margin-bottom:16px;padding-bottom:12px;}
+  .resumen{padding:16px 20px;}
+}
 </style>
 </head>
 <body>
