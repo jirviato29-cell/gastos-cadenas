@@ -865,10 +865,11 @@ def get_resumen(semana_id):
     conn = get_conn()
     cur = conn.cursor()
 
-    # Gastos por tienda
+    # Gastos por tienda: gs.total almacena sueldos+seguro+isn+aguinaldo+vac+pv+comisiones
+    # pero impuestos/gastos_indirectos/fondo_contingencia se guardaron como 0 → añadir igual que balance
     cur.execute("""
         SELECT t.id, t.cadena, t.nombre AS tienda,
-               SUM(gs.total) AS gastos, COUNT(gs.id) AS promotores
+               SUM(gs.total) AS gastos_base, COUNT(gs.id) AS promotores
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
         JOIN tiendas t ON t.id = p.tienda_id
@@ -877,10 +878,12 @@ def get_resumen(semana_id):
     """, (semana_id,))
     result = {}
     for r in cur.fetchall():
+        n = int(r['promotores'])
+        gastos_total = round(float(r['gastos_base'] or 0) + 417.05 + 274.00 + 27.00 * n, 2)
         result[r['id']] = {
             'id': r['id'], 'cadena': r['cadena'], 'tienda': r['tienda'],
-            'gastos': round(float(r['gastos'] or 0), 2),
-            'promotores': int(r['promotores']), 'ingresos': 0.0
+            'gastos': gastos_total,
+            'promotores': n, 'ingresos': 0.0
         }
 
     # Ingresos Telcel por tienda (via subclaves)
@@ -903,13 +906,18 @@ def get_resumen(semana_id):
                 'gastos': 0.0, 'promotores': 0, 'ingresos': ing
             }
 
+    # Comisiones extra — total global (no están asociadas a una tienda específica)
+    cur.execute("SELECT COALESCE(SUM(monto),0) AS total FROM comisiones_extra WHERE semana_id=%s",
+                (semana_id,))
+    extras_total = round(float(cur.fetchone()['total'] or 0), 2)
+
     rows = sorted(result.values(), key=lambda x: (x['cadena'], x['tienda']))
     for r in rows:
         r['utilidad'] = round(r['ingresos'] - r['gastos'], 2)
 
     cur.close()
     release_conn(conn)
-    return jsonify(rows)
+    return jsonify({'rows': rows, 'extras_total': extras_total})
 
 
 # ── BALANCE ───────────────────────────────────────────────────────────────────

@@ -68,7 +68,7 @@ tfoot td:nth-child(4),tfoot td:nth-child(5),tfoot td:nth-child(6),tfoot td:nth-c
       </div>
       <div class="stat">
         <div class="n" id="st-ingresos" style="color:#27AE60;">$0</div>
-        <div class="l">Ingresos Telcel</div>
+        <div class="l">Total Ingresos</div>
       </div>
       <div class="stat">
         <div class="n" id="st-util">$0</div>
@@ -101,13 +101,15 @@ async function cargarResumen() {
   document.getElementById('tabla-container').innerHTML = '';
   document.getElementById('stats').style.display = 'none';
 
-  let rows, todasTiendas;
+  let rows, extrasTotal, todasTiendas;
   try {
     const [resR, tiendasR] = await Promise.all([
       fetch(`/api/resumen/${sid}`),
       fetch('/api/tiendas')
     ]);
-    rows         = await resR.json();
+    const resData = await resR.json();
+    rows         = resData.rows;
+    extrasTotal  = resData.extras_total || 0;
     todasTiendas = await tiendasR.json();
   } catch(e) {
     document.getElementById('spinner').style.display = 'none';
@@ -147,6 +149,7 @@ async function cargarResumen() {
     </tr>`;
   });
 
+  totalIngresos = Math.round((totalIngresos + extrasTotal) * 100) / 100;
   const totalUtil = totalIngresos - totalGastos;
   const totalPct = totalGastos > 0 ? ((totalUtil/totalGastos)*100).toFixed(1) : '—';
 
