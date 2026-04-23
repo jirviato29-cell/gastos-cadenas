@@ -101,15 +101,22 @@ async function cargarResumen() {
   document.getElementById('tabla-container').innerHTML = '';
   document.getElementById('stats').style.display = 'none';
 
-  const [resR, tiendasR] = await Promise.all([
-    fetch(`/api/resumen/${sid}`),
-    fetch('/api/tiendas')
-  ]);
-  const rows        = await resR.json();
-  const todasTiendas = await tiendasR.json();
+  let rows, todasTiendas;
+  try {
+    const [resR, tiendasR] = await Promise.all([
+      fetch(`/api/resumen/${sid}`),
+      fetch('/api/tiendas')
+    ]);
+    rows         = await resR.json();
+    todasTiendas = await tiendasR.json();
+  } catch(e) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('tabla-container').innerHTML = `<div class="empty">Error al cargar: ${e.message}</div>`;
+    return;
+  }
   document.getElementById('spinner').style.display = 'none';
 
-  if (!rows.length) {
+  if (!Array.isArray(rows) || !rows.length) {
     document.getElementById('tabla-container').innerHTML = '<div class="empty">Sin datos para esta semana. Genera los gastos primero.</div>';
     return;
   }

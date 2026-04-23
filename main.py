@@ -201,6 +201,17 @@ def tiendas():
     return render_template('tiendas.html', tiendas=rows)
 
 
+@app.route('/api/tiendas', methods=['GET'])
+def list_tiendas_api():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nombre, cadena FROM tiendas ORDER BY cadena, nombre")
+    rows = [dict(r) for r in cur.fetchall()]
+    cur.close()
+    release_conn(conn)
+    return jsonify(rows)
+
+
 @app.route('/api/tiendas', methods=['POST'])
 def add_tienda():
     d = request.json
