@@ -101,8 +101,12 @@ async function cargarResumen() {
   document.getElementById('tabla-container').innerHTML = '';
   document.getElementById('stats').style.display = 'none';
 
-  const r = await fetch(`/api/resumen/${sid}`);
-  const rows = await r.json();
+  const [resR, tiendasR] = await Promise.all([
+    fetch(`/api/resumen/${sid}`),
+    fetch('/api/tiendas')
+  ]);
+  const rows        = await resR.json();
+  const todasTiendas = await tiendasR.json();
   document.getElementById('spinner').style.display = 'none';
 
   if (!rows.length) {
@@ -146,6 +150,37 @@ async function cargarResumen() {
     <td>${f$(totalUtil)}</td>
     <td style="font-size:11px;">${totalPct}${totalPct!=='—'?'%':''}</td>
   </tr></tfoot></table></div>`;
+
+  // Tiendas sin actividad
+  const activeIds    = new Set(rows.map(r => r.id));
+  const sinActividad = todasTiendas
+    .filter(t => !activeIds.has(t.id))
+    .sort((a,b) => (a.cadena + a.nombre).localeCompare(b.cadena + b.nombre));
+
+  if (sinActividad.length) {
+    html += `<div style="overflow-x:auto;">
+    <table style="margin-top:0;">
+      <tbody>
+        <tr>
+          <td colspan="7" style="background:#F1F5F9;color:#64748B;font-size:10px;
+              font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+              padding:8px 12px;border-top:2px solid #CBD5E1;">
+            Sin actividad &mdash; ${sinActividad.length} tiendas
+          </td>
+        </tr>`;
+    sinActividad.forEach(t => {
+      html += `<tr>
+        <td style="color:#94A3B8;">${t.cadena}</td>
+        <td style="color:#94A3B8;font-weight:400;">${t.nombre}</td>
+        <td style="text-align:center;color:#CBD5E1;">—</td>
+        <td style="text-align:right;color:#CBD5E1;">—</td>
+        <td style="text-align:right;color:#CBD5E1;">—</td>
+        <td style="text-align:right;color:#CBD5E1;">—</td>
+        <td style="text-align:right;color:#CBD5E1;">—</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
 
   document.getElementById('tabla-container').innerHTML = html;
 
