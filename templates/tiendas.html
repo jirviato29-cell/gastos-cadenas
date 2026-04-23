@@ -4,28 +4,153 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tiendas — Gastos Cadenas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-.main{padding:16px;max-width:1100px;margin:0 auto;}
-th:nth-child(4),th:nth-child(5){text-align:left;}
-td:nth-child(4),td:nth-child(5){text-align:left;}
-td:first-child{font-weight:700;color:#002855;}
-.sub-row{display:flex;gap:6px;margin-bottom:5px;}
-.sub-row input{flex:1;}
-.sub-row button{background:none;border:1px solid #D0D9E8;border-radius:6px;padding:5px 9px;cursor:pointer;color:#888;font-size:13px;}
-.conf{font-size:12px;font-weight:700;color:#16A34A;padding:4px 0;display:none;}
-.frow label{display:block;font-size:11px;color:#5A6A80;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
-.frow input,.frow select{width:100%;padding:9px 12px;border:1.5px solid #D8E2F0;border-radius:8px;font-size:13px;}
-.modal{width:480px;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:   #002855;
+  --orange: #FF6B00;
+  --bg:     #F0F3F8;
+  --bg2:    #E6EBF4;
+  --card:   #FFFFFF;
+  --border: #D8E2F0;
+  --text:   #0D1B2E;
+  --text2:  #4A5D75;
+  --text3:  #8A9BB0;
+  --green:  #16A34A;
+  --red:    #C0392B;
+  --font:   'Plus Jakarta Sans', system-ui, sans-serif;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+
+/* ── Topbar ── */
+.topbar { background: var(--navy); height: 64px; display: flex; align-items: center; padding: 0 28px; position: sticky; top: 0; z-index: 200; border-bottom: 3px solid var(--orange); box-shadow: 0 4px 24px rgba(0,20,60,.28); }
+.topbar-logo-wrap { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.topbar-logo { height: 38px; width: auto; border-radius: 5px; object-fit: contain; }
+.topbar-brand { display: flex; flex-direction: column; line-height: 1.1; }
+.topbar-brand-name { font-size: 13px; font-weight: 800; color: #fff; letter-spacing: 2.5px; text-transform: uppercase; }
+.topbar-brand-sub  { font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+.topbar-title { flex: 1; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,.35); margin: 0; }
+nav { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+nav a { color: rgba(255,255,255,.6); text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 6px 11px; border-radius: 6px; transition: all .15s; white-space: nowrap; }
+nav a:hover  { color: var(--orange); background: rgba(255,107,0,.1); }
+nav a.active { color: var(--orange); font-weight: 700; }
+.nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; cursor: pointer; background: none; border: none; padding: 8px; flex-shrink: 0; }
+.nav-toggle span { display: block; width: 22px; height: 2.5px; background: #fff; border-radius: 2px; }
+
+/* ── Page Header ── */
+.page-header { background: linear-gradient(135deg, var(--navy) 0%, #004190 100%); padding: 32px 32px 56px; position: relative; overflow: hidden; }
+.page-header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 32px; background: var(--bg); border-radius: 24px 24px 0 0; }
+.page-header-orb { position: absolute; right: -40px; top: -30px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,0,.15) 0%, transparent 70%); pointer-events: none; }
+.page-header-inner { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; }
+.page-h1 { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -.3px; margin-bottom: 4px; }
+.page-desc { font-size: 13px; color: rgba(255,255,255,.45); font-weight: 500; }
+.page-actions { display: flex; gap: 10px; flex-shrink: 0; padding-bottom: 4px; }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; font-size: 12.5px; font-weight: 700; border: none; border-radius: 9px; cursor: pointer; transition: all .15s; white-space: nowrap; font-family: var(--font); letter-spacing: .3px; }
+.btn:hover { opacity: .88; transform: translateY(-1px); }
+.btn-azul   { background: var(--navy); color: #fff; box-shadow: 0 3px 10px rgba(0,40,85,.2); }
+.btn-orange { background: var(--orange); color: #fff; box-shadow: 0 3px 10px rgba(255,107,0,.28); }
+.btn-gris   { background: var(--bg2); color: var(--text2); border: 1.5px solid var(--border); }
+.btn-edit { background: #FEF9E7; border: 1px solid #F59E0B; color: #92400E; border-radius: 7px; padding: 5px 12px; font-size: 11.5px; cursor: pointer; font-weight: 700; font-family: var(--font); transition: all .15s; }
+.btn-edit:hover { background: #FDE68A; }
+.btn-del  { background: #FEE2E2; border: 1px solid #F87171; color: #991B1B; border-radius: 7px; padding: 5px 12px; font-size: 11.5px; cursor: pointer; font-weight: 700; font-family: var(--font); transition: all .15s; }
+.btn-del:hover { background: #FECACA; }
+
+/* ── Main ── */
+.main { padding: 0 32px 48px; max-width: 1100px; margin: 0 auto; }
+
+/* ── Content card ── */
+.content-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,28,75,.07); }
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th { background: var(--navy); color: #fff; padding: 11px 14px; text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+td { padding: 10px 14px; border-bottom: 1px solid #EEF2F9; vertical-align: middle; }
+td:first-child { font-weight: 700; color: var(--navy); }
+tr:hover td { background: #F5F8FD; }
+tr:last-child td { border-bottom: none; }
+
+/* ── Badges ── */
+.badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 700; margin: 2px; }
+.badge-azul { background: #DBEAFE; color: #1E40AF; }
+.badge-gris { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
+
+/* ── Modal ── */
+.modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,10,30,.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+.modal-bg.show { display: flex; }
+.modal { background: var(--card); border-radius: 16px; padding: 28px; width: 480px; max-height: 92vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.22); border: 1px solid var(--border); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.modal-title { font-size: 16px; font-weight: 800; color: var(--navy); }
+.modal-close { background: var(--bg2); border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 16px; transition: background .15s; }
+.modal-close:hover { background: var(--border); }
+.frow { margin-bottom: 14px; }
+.frow label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; }
+.frow input, .frow select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 9px; font-size: 13px; font-family: var(--font); background: var(--bg); color: var(--text); transition: border-color .15s; }
+.frow input:focus, .frow select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,40,85,.1); }
+.btns { display: flex; gap: 10px; margin-top: 22px; }
+
+/* Subclaves */
+.sub-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.sub-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); }
+.btn-add-sub { background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 4px; }
+.sub-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.sub-row input { flex: 1; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: var(--font); background: var(--bg); color: var(--text); }
+.sub-row input:focus { outline: none; border-color: var(--navy); }
+.sub-row .btn-rm { background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; cursor: pointer; color: var(--text3); font-size: 13px; transition: all .15s; }
+.sub-row .btn-rm:hover { background: #FEE2E2; border-color: #F87171; color: var(--red); }
+
+/* ── Print ── */
+.print-logo { display: none; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 3px solid var(--navy); margin-bottom: 24px; }
+.print-logo img { height: 50px; }
+.print-empresa { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+.print-semana  { font-size: 12px; color: #666; margin-top: 4px; }
+
+@media print {
+  .topbar, .page-header, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .main { padding: 0 !important; max-width: 100% !important; }
+  .print-logo { display: flex !important; }
+  .content-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  th { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 720px) {
+  .topbar { height: auto; padding: 10px 16px; flex-wrap: wrap; row-gap: 0; }
+  .topbar-title { flex: 1; font-size: 9px; letter-spacing: 2px; }
+  .nav-toggle { display: flex; }
+  nav { display: none; width: 100%; flex-direction: column; gap: 2px; padding: 6px 0 10px; order: 10; border-top: 1px solid rgba(255,255,255,.12); margin-top: 8px; }
+  .topbar.nav-open nav { display: flex; }
+  nav a { padding: 10px 8px; font-size: 14px; display: block; }
+  .page-header { padding: 24px 20px 48px; }
+  .page-h1 { font-size: 22px; }
+  .main { padding: 0 14px 40px; }
+  .page-actions { width: 100%; }
+  .modal { width: calc(100vw - 24px); padding: 22px 16px; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 540px; }
+}
 </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
-  <h1 class="topbar-title">GASTOS CADENAS</h1>
-  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
-    <nav>
+  <div class="topbar-logo-wrap">
+    <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo">
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">ATO</span>
+      <span class="topbar-brand-sub">Gastos Cadenas</span>
+    </div>
+  </div>
+  <h1 class="topbar-title">Sistema de Gestión</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+  <nav>
     <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>
     <a href="/comisiones">Comisiones</a>
@@ -36,72 +161,120 @@ td:first-child{font-weight:700;color:#002855;}
     <a href="/resumen">Resumen</a>
   </nav>
 </div>
-<div class="print-logo"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" style="height:50px;width:auto;"><div><span class="print-empresa">GASTOS CADENAS</span><div class="print-semana" id="print-info"></div></div></div>
-<div class="main">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h2 style="margin:0;">Tiendas ({{ tiendas|length }})</h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn no-print" onclick="window.print()" style="background:#FF6B00;color:#fff;">🖨 Imprimir PDF</button>
-        <button class="btn btn-azul no-print" onclick="abrirModal()">+ Nueva tienda</button>
-      </div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-orb"></div>
+  <div class="page-header-inner">
+    <div>
+      <div class="page-eyebrow">Catálogo</div>
+      <h2 class="page-h1">Tiendas <span style="color:rgba(255,255,255,.4);font-weight:400;font-size:22px;">({{ tiendas|length }})</span></h2>
+      <p class="page-desc">Gestión de cadenas comerciales, claves principales y subclaves Telcel</p>
     </div>
-    <div style="overflow-x:auto;">
-    <table>
-      <thead><tr>
-        <th>Cadena</th><th>Nombre</th><th>Clave principal</th><th>Subclaves Telcel</th><th>Acciones</th>
-      </tr></thead>
-      <tbody id="tbody">
-      {% for t in tiendas %}
-      <tr id="tr-{{ t.id }}">
-        <td><strong>{{ t.cadena }}</strong></td>
-        <td>{{ t.nombre }}</td>
-        <td><span class="badge badge-azul">{{ t.clave_principal }}</span></td>
-        <td>
-          {% if t.subclaves %}
-            {% for s in t.subclaves %}<span class="badge badge-gris">{{ s }}</span>{% endfor %}
-          {% else %}<span style="color:#aaa;font-size:11px;">Sin subclaves</span>{% endif %}
-        </td>
-        <td style="white-space:nowrap;">
-          <button class="btn-edit" onclick='editarTienda({{ t.id }}, {{ t|tojson }})'>Editar</button>
-          <button class="btn-del" onclick="borrarTienda({{ t.id }}, '{{ t.nombre }}')">Borrar</button>
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="5" style="text-align:center;padding:2rem;color:#aaa;">Sin tiendas registradas</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+    <div class="page-actions no-print">
+      <button class="btn btn-orange" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir PDF
+      </button>
+      <button class="btn" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);" onclick="abrirModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva tienda
+      </button>
     </div>
   </div>
 </div>
 
-<div class="modal-bg" id="modal-bg">
-<div class="modal">
-  <h3 id="modal-title">Nueva tienda</h3>
-  <input type="hidden" id="m-id">
-  <div class="frow"><label>Cadena</label><input id="m-cadena" placeholder="Ej: Walmart, Soriana..."></div>
-  <div class="frow"><label>Nombre de tienda</label><input id="m-nombre" placeholder="Ej: Walmart Aguascalientes Centro"></div>
-  <div class="frow"><label>Clave principal Telcel</label><input id="m-clave" placeholder="Ej: WAL001"></div>
-  <div class="frow">
-    <label>Subclaves Telcel <button type="button" onclick="addSubFila()" style="background:#002855;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px;">+ Sub</button></label>
-    <div id="subs-container"></div>
-  </div>
-  <div class="conf" id="modal-conf"></div>
-  <div class="btns">
-    <button class="btn btn-azul" onclick="guardarTienda()">Guardar</button>
-    <button class="btn btn-gris" onclick="cerrar()">Cancelar</button>
+<!-- PRINT HEADER -->
+<div class="print-logo">
+  <img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO">
+  <div>
+    <span class="print-empresa">GASTOS CADENAS</span>
+    <div class="print-semana" id="print-info"></div>
   </div>
 </div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="content-card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Cadena</th>
+          <th>Nombre de tienda</th>
+          <th>Clave Principal</th>
+          <th>Subclaves Telcel</th>
+          <th class="no-print">Acciones</th>
+        </tr></thead>
+        <tbody id="tbody">
+        {% for t in tiendas %}
+        <tr id="tr-{{ t.id }}">
+          <td>{{ t.cadena }}</td>
+          <td style="font-weight:500;color:var(--text2);">{{ t.nombre }}</td>
+          <td><span class="badge badge-azul">{{ t.clave_principal }}</span></td>
+          <td>
+            {% if t.subclaves %}
+              {% for s in t.subclaves %}<span class="badge badge-gris">{{ s }}</span>{% endfor %}
+            {% else %}
+              <span style="color:var(--text3);font-size:11px;">Sin subclaves</span>
+            {% endif %}
+          </td>
+          <td style="white-space:nowrap;" class="no-print">
+            <button class="btn-edit" onclick='editarTienda({{ t.id }}, {{ t|tojson }})'>Editar</button>
+            <button class="btn-del"  onclick="borrarTienda({{ t.id }}, '{{ t.nombre }}')">Borrar</button>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;padding:48px;color:var(--text3);">Sin tiendas registradas</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Nueva tienda</span>
+      <button class="modal-close" onclick="cerrar()">✕</button>
+    </div>
+    <input type="hidden" id="m-id">
+    <div class="frow">
+      <label>Cadena</label>
+      <input id="m-cadena" placeholder="Ej: Walmart, Soriana...">
+    </div>
+    <div class="frow">
+      <label>Nombre de tienda</label>
+      <input id="m-nombre" placeholder="Ej: Walmart Aguascalientes Centro">
+    </div>
+    <div class="frow">
+      <label>Clave principal Telcel</label>
+      <input id="m-clave" placeholder="Ej: WAL001">
+    </div>
+    <div class="frow">
+      <div class="sub-label-row">
+        <span class="sub-label">Subclaves Telcel</span>
+        <button class="btn-add-sub" type="button" onclick="addSubFila()">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar
+        </button>
+      </div>
+      <div id="subs-container"></div>
+    </div>
+    <div class="btns">
+      <button class="btn btn-azul" onclick="guardarTienda()">Guardar tienda</button>
+      <button class="btn btn-gris" onclick="cerrar()">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <script>
 let editId = null;
 
-function abrirModal(t) {
+function abrirModal() {
   editId = null;
   document.getElementById('modal-title').textContent = 'Nueva tienda';
-  document.getElementById('m-id').value = '';
   document.getElementById('m-cadena').value = '';
   document.getElementById('m-nombre').value = '';
   document.getElementById('m-clave').value = '';
@@ -127,8 +300,8 @@ function addSubFila(val='') {
   const c = document.getElementById('subs-container');
   const d = document.createElement('div');
   d.className = 'sub-row';
-  d.innerHTML = `<input type="text" placeholder="Subclave" value="${val}">
-    <button onclick="this.parentElement.remove()">✕</button>`;
+  d.innerHTML = `<input type="text" placeholder="Subclave Telcel" value="${val}">
+    <button class="btn-rm" onclick="this.parentElement.remove()">✕</button>`;
   c.appendChild(d);
 }
 
@@ -148,17 +321,17 @@ async function guardarTienda() {
     alert('Cadena, nombre y clave principal son obligatorios.');
     return;
   }
-  const url = editId ? `/api/tiendas/${editId}` : '/api/tiendas';
+  const url    = editId ? `/api/tiendas/${editId}` : '/api/tiendas';
   const method = editId ? 'PUT' : 'POST';
-  const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-  const data = await res.json();
+  const res    = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  const data   = await res.json();
   if (data.ok) { cerrar(); location.reload(); }
   else alert('Error: ' + data.error);
 }
 
 async function borrarTienda(id, nombre) {
   if (!confirm(`¿Borrar la tienda "${nombre}"? También se eliminarán sus subclaves.`)) return;
-  const res = await fetch(`/api/tiendas/${id}`, {method:'DELETE'});
+  const res  = await fetch(`/api/tiendas/${id}`, {method:'DELETE'});
   const data = await res.json();
   if (data.ok) document.getElementById(`tr-${id}`)?.remove();
   else alert('Error: ' + data.error);
