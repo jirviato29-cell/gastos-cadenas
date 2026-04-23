@@ -26,6 +26,7 @@ tfoot td:nth-child(4),tfoot td:nth-child(5),tfoot td:nth-child(6),tfoot td:nth-c
 <div class="topbar">
   <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
   <h1 class="topbar-title">GASTOS CADENAS</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
     <nav>
     <a href="/balance">Balance</a>
     <a href="/gastos">Gastos</a>

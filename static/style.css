@@ -270,3 +270,109 @@ tfoot td {
   tfoot td { background: #002855 !important; color: #fff !important;
              -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ── Hamburger (hidden on desktop) ───────────────────────── */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.nav-toggle span {
+  display: block;
+  width: 22px;
+  height: 2.5px;
+  background: #fff;
+  border-radius: 2px;
+}
+
+/* ── Mini-stats bar (gastos.html) ────────────────────────── */
+.mini-stats {
+  background: #fff;
+  border: 1px solid #E8EDF5;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0,28,75,.06);
+  flex-wrap: wrap;
+}
+.mini-total { flex: 1; min-width: 160px; }
+.mini-total #counter-total { font-size: 22px; font-weight: 800; color: #002855; display: block; line-height: 1.2; }
+.mini-total #counter-sub { font-size: 11px; color: #94A3B8; }
+.mini-nums { display: flex; gap: 16px; }
+.mini-nums > div { text-align: center; }
+.mini-nums span { font-size: 20px; font-weight: 700; color: #002855; display: block; }
+.mini-nums small { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: .3px; }
+
+/* ── Responsive Mobile (≤ 640px) ─────────────────────────── */
+@media (max-width: 640px) {
+  /* Topbar */
+  .topbar { flex-wrap: wrap; height: auto; padding: 10px 14px; row-gap: 0; }
+  .topbar-title { font-size: 13px; letter-spacing: 1.5px; flex: 1; text-align: left; padding-left: 10px; }
+  .topbar-left { flex: 0 0 auto; }
+
+  /* Hamburger visible */
+  .nav-toggle { display: flex; }
+
+  /* Nav dropdown */
+  nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 0 10px;
+    order: 10;
+    border-top: 1px solid rgba(255,255,255,.15);
+    margin-top: 6px;
+  }
+  .topbar.nav-open nav { display: flex; }
+  nav a { padding: 10px 8px; font-size: 14px; border-radius: 8px; display: block; }
+
+  /* Layout */
+  .main { padding: 10px; }
+
+  /* Buttons — bigger touch targets */
+  .btn { padding: 12px 16px; font-size: 14px; min-height: 44px; }
+  .btn-edit, .btn-del { padding: 7px 12px; font-size: 12px; }
+
+  /* Inputs — 16px prevents iOS auto-zoom */
+  input, select, textarea { font-size: 16px; min-height: 44px; }
+
+  /* Modal full-width */
+  .modal { width: calc(100vw - 24px); padding: 20px 16px; }
+
+  /* Stat grids → 2 columns */
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat-row { gap: 6px; }
+  .stat-card { min-width: 0; flex: 1 1 calc(50% - 6px); }
+
+  /* Mini-stats compact */
+  .mini-stats { gap: 10px; padding: 10px 12px; }
+  .mini-total #counter-total { font-size: 18px; }
+  .mini-nums { gap: 10px; }
+  .mini-nums span { font-size: 16px; }
+
+  /* Tables — scroll inside .tab-body and existing overflow-x wrappers */
+  .tab-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 480px; }
+  th, td { white-space: nowrap; padding: 8px 10px; }
+
+  /* Controls stack */
+  .controls { flex-direction: column; align-items: stretch; }
+  .controls select, select { min-width: 0; width: 100%; }
+
+  /* Balance page */
+  .estado { padding: 20px 14px; }
+  .resumen { padding: 20px 14px; }
+  .monto { min-width: 90px; font-size: 13px; }
+  .fila, .fila-sub { font-size: 13px; }
+  .utilidad-fila .monto { font-size: 22px; }
+}

@@ -34,6 +34,7 @@ tfoot td:last-child{font-size:14px;}
 <div class="topbar">
   <div class="topbar-left"><img src="{{ url_for('static', filename='ATO.jpeg') }}" alt="ATO" class="topbar-logo" style="height:40px;width:auto;"></div>
   <h1 class="topbar-title">GASTOS CADENAS</h1>
+  <button class="nav-toggle" onclick="this.closest('.topbar').classList.toggle('nav-open')" aria-label="Menu"><span></span><span></span><span></span></button>
     <nav>
     <a href="/balance">Balance</a>
     <a href="/gastos" class="active">Gastos</a>
@@ -58,6 +59,20 @@ tfoot td:last-child{font-size:14px;}
     </div>
     <button class="btn btn-azul" onclick="abrirModalSemana()">+ Nueva semana</button>
     <button class="btn btn-verde" id="btn-generar" onclick="generarGastos()" disabled>⚙ Generar / Actualizar</button>
+  </div>
+
+  <!-- Mini-stats bar -->
+  <div class="mini-stats">
+    <div class="mini-total">
+      <span id="counter-total">$0.00</span>
+      <small id="counter-sub">Sin datos — presiona "Generar / Actualizar"</small>
+    </div>
+    <div class="mini-nums">
+      <div><span id="mn-proms">0</span><small>Promotores</small></div>
+      <div><span id="mn-tiendas">0</span><small>Tiendas</small></div>
+      <div><span id="mn-cadenas">0</span><small>Cadenas</small></div>
+      <div><span id="mn-seguros">0</span><small>Con Seguro</small></div>
+    </div>
   </div>
 
   <!-- Pestañas -->
