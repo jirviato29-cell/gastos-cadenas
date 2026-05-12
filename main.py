@@ -1099,7 +1099,7 @@ def update_sueldos_promotores(semana_id):
 
 # ── COMISIONES EXTRA ─────────────────────────────────────────────────────────
 
-TIPOS_COMISION_EXTRA = ['2% AP', 'Volumen Garantizado', 'Amigo Kit', 'Cadena Comercial']
+TIPOS_COMISION_EXTRA = ['2% AP', 'Volumen Garantizado', 'Amigo Kit', 'Comisión ST Cadenas', 'Chip Libre']
 
 @app.route('/comisiones-extra')
 def comisiones_extra():
