@@ -886,50 +886,113 @@ function renderIsnImpuestos() {
   cont.innerHTML = html;
 }
 
-// ── Render Sueldos / Comisiones ──────────────────────────────────────────────
+// ── Render Sueldos / Comisiones (por promotor, editable) ────────────────────
 function renderSueldosComisiones() {
   const cont = document.getElementById('tab-content');
-  const ra = 'text-align:right;', ca = 'text-align:center;';
+  const ra = 'text-align:right;';
 
-  const grupos = {}, orden = [];
-  detalleData.forEach(r => {
-    const key = r.cadena + '||' + r.tienda;
-    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, sueldos: 0, comisiones: 0 }; orden.push(key); }
-    grupos[key].proms      += 1;
-    grupos[key].sueldos    = Math.round((grupos[key].sueldos    + (r.sueldo_semanal || 0)) * 100) / 100;
-    grupos[key].comisiones = Math.round((grupos[key].comisiones + (r.comisiones     || 0)) * 100) / 100;
-  });
+  const sorted = [...detalleData].sort((a, b) =>
+    (a.cadena + a.tienda + (a.promotor_id || '')).localeCompare(
+      b.cadena + b.tienda + (b.promotor_id || '')
+    )
+  );
 
-  orden.forEach(k => { grupos[k].total = Math.round((grupos[k].sueldos + grupos[k].comisiones) * 100) / 100; });
+  const totS = Math.round(sorted.reduce((s, r) => s + (r.sueldo_semanal || 0), 0) * 100) / 100;
+  const totC = Math.round(sorted.reduce((s, r) => s + (r.comisiones     || 0), 0) * 100) / 100;
+  const totT = Math.round((totS + totC) * 100) / 100;
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const inSt = 'width:88px;text-align:right;padding:4px 6px;border:1.5px solid var(--border);' +
+               'border-radius:6px;font-size:12px;font-family:var(--font);' +
+               'background:var(--bg);color:var(--text);';
 
-  const totSueldos    = conGasto.reduce((s,g) => Math.round((s + g.sueldos)    * 100) / 100, 0);
-  const totComisiones = conGasto.reduce((s,g) => Math.round((s + g.comisiones) * 100) / 100, 0);
-  const totTotal      = Math.round((totSueldos + totComisiones) * 100) / 100;
-
-  let html = printBar()
-    + statPanel(conGasto.length, totTotal, 'Tiendas con gasto', 'Total — Sueldos y Comisiones')
-    + `<table><thead><tr>
-      <th>Cadena</th><th>Tienda</th><th style="${ca}">Prom.</th>
-      <th style="${ra}">Sueldos</th><th style="${ra}">Comisiones</th><th style="${ra}">Total</th>
+  let html = `<div class="no-print" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 2px;">
+    <button class="btn btn-verde" style="padding:7px 18px;font-size:12px;" onclick="guardarSueldos()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Guardar cambios
+    </button>
+    <button class="tab-print-btn" onclick="imprimirTab()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir
+    </button>
+  </div>`
+    + statPanel(sorted.length, totT, 'Promotores', 'Total — Sueldos y Comisiones')
+    + `<div style="overflow-x:auto;"><table>
+    <thead><tr>
+      <th>Cadena</th><th>Tienda</th><th>ID Promotor</th><th>Nombre</th>
+      <th style="${ra}">Sueldo</th><th style="${ra}">Comisión</th><th style="${ra}">Total</th>
     </tr></thead><tbody>`;
 
-  conGasto.forEach(g => {
-    html += `<tr><td>${g.cadena}</td><td style="font-weight:500;color:var(--text2);">${g.tienda}</td><td style="${ca}font-weight:500;">${g.proms}</td><td style="${ra}">${f$(g.sueldos)}</td><td style="${ra}">${f$(g.comisiones)}</td><td style="${ra}">${f$(g.total)}</td></tr>`;
+  sorted.forEach(r => {
+    const pid = r.promotor_db_id;
+    const s   = parseFloat(r.sueldo_semanal || 0).toFixed(2);
+    const c   = parseFloat(r.comisiones     || 0).toFixed(2);
+    html += `<tr>
+      <td>${r.cadena}</td>
+      <td style="font-weight:500;color:var(--text2);">${r.tienda}</td>
+      <td style="color:var(--text3);font-weight:500;">${r.promotor_id || '—'}</td>
+      <td>${r.promotor}</td>
+      <td style="${ra}"><input type="number" step="0.01" min="0" class="sc-sueldo"
+        data-pid="${pid}" value="${s}" style="${inSt}" oninput="recalcSueldos()"></td>
+      <td style="${ra}"><input type="number" step="0.01" min="0" class="sc-comision"
+        data-pid="${pid}" value="${c}" style="${inSt}" oninput="recalcSueldos()"></td>
+      <td style="${ra}" class="sc-total-row" data-pid="${pid}">${f$(parseFloat(s)+parseFloat(c))}</td>
+    </tr>`;
   });
 
-  html += `</tbody><tfoot><tr><td colspan="3">SUBTOTAL — Sueldos y Comisiones</td><td style="${ra}">${f$(totSueldos)}</td><td style="${ra}">${f$(totComisiones)}</td><td style="${ra}">${f$(totTotal)}</td></tr></tfoot></table>`;
+  html += `</tbody><tfoot><tr>
+    <td colspan="4">SUBTOTAL — Sueldos y Comisiones</td>
+    <td id="sc-tot-sueldos" style="${ra}">${f$(totS)}</td>
+    <td id="sc-tot-comisiones" style="${ra}">${f$(totC)}</td>
+    <td id="sc-tot-total" style="${ra}">${f$(totT)}</td>
+  </tr></tfoot></table></div>`;
 
-  if (sinGasto.length) {
-    html += `<table style="margin-top:0;border-top:none;"><thead><tr><th colspan="6" style="background:#EEF2F9;color:var(--text3);font-size:10px;letter-spacing:.5px;">SIN GASTO</th></tr></thead><tbody>`;
-    sinGasto.forEach(g => {
-      html += `<tr><td style="color:var(--text3);">${g.cadena}</td><td style="font-weight:400;color:var(--text3);">${g.tienda}</td><td style="${ca}color:var(--text3);">${g.proms}</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td><td style="${ra}color:var(--text3);">$0.00</td></tr>`;
-    });
-    html += `</tbody></table>`;
-  }
   cont.innerHTML = html;
+}
+
+function recalcSueldos() {
+  let totS = 0, totC = 0;
+  document.querySelectorAll('.sc-sueldo').forEach(inp => {
+    const pid  = inp.dataset.pid;
+    const s    = parseFloat(inp.value) || 0;
+    const cInp = document.querySelector(`.sc-comision[data-pid="${pid}"]`);
+    const c    = cInp ? parseFloat(cInp.value) || 0 : 0;
+    const cell = document.querySelector(`.sc-total-row[data-pid="${pid}"]`);
+    if (cell) cell.textContent = f$(s + c);
+    totS += s; totC += c;
+  });
+  const elS = document.getElementById('sc-tot-sueldos');
+  const elC = document.getElementById('sc-tot-comisiones');
+  const elT = document.getElementById('sc-tot-total');
+  if (elS) elS.textContent = f$(totS);
+  if (elC) elC.textContent = f$(totC);
+  if (elT) elT.textContent = f$(totS + totC);
+}
+
+async function guardarSueldos() {
+  const sid = document.getElementById('sel-semana').value;
+  if (!sid) return;
+  const rows = [];
+  document.querySelectorAll('.sc-sueldo').forEach(inp => {
+    const pid  = parseInt(inp.dataset.pid);
+    const cInp = document.querySelector(`.sc-comision[data-pid="${pid}"]`);
+    rows.push({
+      promotor_db_id:  pid,
+      sueldo_semana:   parseFloat(inp.value)           || 0,
+      comision_semana: parseFloat(cInp ? cInp.value : 0) || 0,
+    });
+  });
+  try {
+    const r = await fetch(`/api/gastos/${sid}/sueldos_promotores`, {
+      method: 'PUT', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(rows),
+    });
+    const d = await r.json();
+    if (!d.ok) { alert('Error: ' + d.error); return; }
+    alert('Cambios guardados correctamente.');
+    await onSemanaChange();
+  } catch (e) {
+    alert('Error al guardar: ' + e.message);
+  }
 }
 
 // ── Render Tab genérico ──────────────────────────────────────────────────────

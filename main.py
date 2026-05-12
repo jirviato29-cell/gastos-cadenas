@@ -173,6 +173,17 @@ def init_db():
                 notas TEXT
             )
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS gastos_semanales_promotor (
+                id SERIAL PRIMARY KEY,
+                semana_id INTEGER REFERENCES semanas(id) ON DELETE CASCADE,
+                promotor_id INTEGER REFERENCES promotores(id) ON DELETE CASCADE,
+                sueldo_semana FLOAT DEFAULT 0,
+                comision_semana FLOAT DEFAULT 0,
+                fecha_modificacion TIMESTAMP DEFAULT NOW(),
+                UNIQUE(semana_id, promotor_id)
+            )
+        """)
         conn.commit()
         print("DB gastos-cadenas OK")
     finally:
@@ -551,6 +562,13 @@ def generar_gastos():
             """, (semana_id, p['id'], g['sueldo_semanal'], com, g['seguro'],
                   g['isn'], 0, 0, 0,
                   g['aguinaldo'], g['vacaciones'], g['prima_vacacional'], total_final))
+            # Seed per-week sueldo/comisión — DO NOTHING preserves manual edits
+            cur.execute("""
+                INSERT INTO gastos_semanales_promotor
+                    (semana_id, promotor_id, sueldo_semana, comision_semana, fecha_modificacion)
+                VALUES (%s, %s, %s, %s, NOW())
+                ON CONFLICT (semana_id, promotor_id) DO NOTHING
+            """, (semana_id, p['id'], g['sueldo_semanal'], com))
 
         conn.commit()
         return jsonify({'ok': True, 'promotores': len(proms)})
@@ -568,17 +586,22 @@ def get_gastos(semana_id):
     cur = conn.cursor()
     cur.execute("""
         SELECT t.cadena, t.nombre AS tienda,
-               COUNT(gs.id)             AS promotores,
-               SUM(gs.sueldo_semanal)   AS sueldos,
-               SUM(gs.comisiones)       AS comisiones,
-               SUM(gs.seguro)           AS seguro,
-               SUM(gs.aguinaldo)        AS aguinaldo,
-               SUM(gs.vacaciones)       AS vacaciones,
-               SUM(gs.prima_vacacional) AS prima_vacacional,
-               SUM(gs.total)            AS total
+               COUNT(gs.id)                                                             AS promotores,
+               SUM(COALESCE(gsp.sueldo_semana,   gs.sueldo_semanal))                   AS sueldos,
+               SUM(COALESCE(gsp.comision_semana, gs.comisiones))                       AS comisiones,
+               SUM(gs.seguro)                                                           AS seguro,
+               SUM(gs.aguinaldo)                                                        AS aguinaldo,
+               SUM(gs.vacaciones)                                                       AS vacaciones,
+               SUM(gs.prima_vacacional)                                                 AS prima_vacacional,
+               SUM(COALESCE(gsp.sueldo_semana,   gs.sueldo_semanal)
+                 + COALESCE(gsp.comision_semana, gs.comisiones)
+                 + gs.seguro + gs.isn
+                 + gs.aguinaldo + gs.vacaciones + gs.prima_vacacional)                  AS total
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
         JOIN tiendas t ON t.id = p.tienda_id
+        LEFT JOIN gastos_semanales_promotor gsp
+            ON gsp.semana_id = gs.semana_id AND gsp.promotor_id = gs.promotor_id
         WHERE gs.semana_id = %s
         GROUP BY t.id, t.cadena, t.nombre
         ORDER BY t.cadena, t.nombre
@@ -608,15 +631,22 @@ def get_gastos_detalle(semana_id):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT gs.sueldo_semanal, gs.comisiones, gs.seguro, gs.isn,
-               gs.impuestos, gs.gastos_indirectos, gs.fondo_contingencia,
-               gs.aguinaldo, gs.vacaciones, gs.prima_vacacional, gs.total,
+        SELECT COALESCE(gsp.sueldo_semana,   gs.sueldo_semanal) AS sueldo_semanal,
+               COALESCE(gsp.comision_semana, gs.comisiones)     AS comisiones,
+               gs.seguro, gs.isn, gs.impuestos, gs.gastos_indirectos,
+               gs.fondo_contingencia, gs.aguinaldo, gs.vacaciones, gs.prima_vacacional,
+               COALESCE(gsp.sueldo_semana,   gs.sueldo_semanal)
+                 + COALESCE(gsp.comision_semana, gs.comisiones)
+                 + gs.seguro + gs.isn
+                 + gs.aguinaldo + gs.vacaciones + gs.prima_vacacional AS total,
                p.nombre AS promotor, p.promotor_id,
-               t.nombre AS tienda,
-               t.cadena
+               p.id     AS promotor_db_id,
+               t.nombre AS tienda, t.cadena
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
         JOIN tiendas t ON t.id = p.tienda_id
+        LEFT JOIN gastos_semanales_promotor gsp
+            ON gsp.semana_id = gs.semana_id AND gsp.promotor_id = gs.promotor_id
         WHERE gs.semana_id = %s
         ORDER BY t.cadena, t.nombre, p.promotor_id
     """, (semana_id,))
@@ -869,10 +899,16 @@ def get_resumen(semana_id):
     # pero impuestos/gastos_indirectos/fondo_contingencia se guardaron como 0 → añadir igual que balance
     cur.execute("""
         SELECT t.id, t.cadena, t.nombre AS tienda,
-               SUM(gs.total) AS gastos_base, COUNT(gs.id) AS promotores
+               SUM(COALESCE(gsp.sueldo_semana,   gs.sueldo_semanal)
+                 + COALESCE(gsp.comision_semana, gs.comisiones)
+                 + gs.seguro + gs.isn
+                 + gs.aguinaldo + gs.vacaciones + gs.prima_vacacional) AS gastos_base,
+               COUNT(gs.id) AS promotores
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
         JOIN tiendas t ON t.id = p.tienda_id
+        LEFT JOIN gastos_semanales_promotor gsp
+            ON gsp.semana_id = gs.semana_id AND gsp.promotor_id = gs.promotor_id
         WHERE gs.semana_id = %s
         GROUP BY t.id, t.cadena, t.nombre
     """, (semana_id,))
@@ -952,20 +988,22 @@ def get_balance(semana_id):
     extra_rows = cur.fetchall()
 
     cur.execute("""
-        SELECT COUNT(gs.id)                                        AS n_prom,
-               COUNT(DISTINCT p.tienda_id)                         AS n_tiend,
-               SUM(gs.sueldo_semanal)                              AS sueldos,
-               SUM(gs.comisiones)                                  AS comisiones,
-               SUM(CASE WHEN gs.comisiones > 0 THEN 1 ELSE 0 END)  AS n_com,
-               SUM(gs.seguro)                                      AS seguro,
-               SUM(CASE WHEN gs.seguro > 0 THEN 1 ELSE 0 END)     AS n_seg,
-               SUM(gs.aguinaldo)                                   AS aguinaldo,
-               SUM(gs.vacaciones)                                  AS vacaciones,
-               SUM(CASE WHEN gs.vacaciones > 0 THEN 1 ELSE 0 END) AS n_vac,
-               SUM(gs.prima_vacacional)                            AS prima_vacacional,
-               SUM(CASE WHEN gs.prima_vacacional > 0 THEN 1 ELSE 0 END) AS n_pv
+        SELECT COUNT(gs.id)                                                                    AS n_prom,
+               COUNT(DISTINCT p.tienda_id)                                                     AS n_tiend,
+               SUM(COALESCE(gsp.sueldo_semana,   gs.sueldo_semanal))                          AS sueldos,
+               SUM(COALESCE(gsp.comision_semana, gs.comisiones))                              AS comisiones,
+               SUM(CASE WHEN COALESCE(gsp.comision_semana, gs.comisiones) > 0 THEN 1 ELSE 0 END) AS n_com,
+               SUM(gs.seguro)                                                                  AS seguro,
+               SUM(CASE WHEN gs.seguro > 0 THEN 1 ELSE 0 END)                                AS n_seg,
+               SUM(gs.aguinaldo)                                                               AS aguinaldo,
+               SUM(gs.vacaciones)                                                              AS vacaciones,
+               SUM(CASE WHEN gs.vacaciones > 0 THEN 1 ELSE 0 END)                            AS n_vac,
+               SUM(gs.prima_vacacional)                                                        AS prima_vacacional,
+               SUM(CASE WHEN gs.prima_vacacional > 0 THEN 1 ELSE 0 END)                      AS n_pv
         FROM gastos_semana gs
         JOIN promotores p ON p.id = gs.promotor_id
+        LEFT JOIN gastos_semanales_promotor gsp
+            ON gsp.semana_id = gs.semana_id AND gsp.promotor_id = gs.promotor_id
         WHERE gs.semana_id = %s
     """, (semana_id,))
     g = dict(cur.fetchone())
@@ -1023,6 +1061,36 @@ def get_balance(semana_id):
         'utilidad': utilidad,
         'margen': margen,
     })
+
+
+@app.route('/api/gastos/<int:semana_id>/sueldos_promotores', methods=['PUT'])
+def update_sueldos_promotores(semana_id):
+    """Guarda sueldo/comisión por semana sin tocar la tabla promotores."""
+    rows = request.json
+    if not rows:
+        return jsonify({'ok': False, 'error': 'Sin datos'}), 400
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        for row in rows:
+            cur.execute("""
+                INSERT INTO gastos_semanales_promotor
+                    (semana_id, promotor_id, sueldo_semana, comision_semana, fecha_modificacion)
+                VALUES (%s, %s, %s, %s, NOW())
+                ON CONFLICT (semana_id, promotor_id) DO UPDATE SET
+                    sueldo_semana      = EXCLUDED.sueldo_semana,
+                    comision_semana    = EXCLUDED.comision_semana,
+                    fecha_modificacion = NOW()
+            """, (semana_id, int(row['promotor_db_id']),
+                  float(row['sueldo_semana']), float(row['comision_semana'])))
+        conn.commit()
+        return jsonify({'ok': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'ok': False, 'error': str(e)}), 400
+    finally:
+        cur.close()
+        release_conn(conn)
 
 
 # ── COMISIONES EXTRA ─────────────────────────────────────────────────────────
