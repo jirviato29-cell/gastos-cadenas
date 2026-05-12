@@ -560,6 +560,21 @@ let semLabel    = '';
 const f$ = n => '$' + parseFloat(n||0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
 const d2 = n => n.toString().padStart(2,'0');
 
+// Natural sort para IDs como "C10", "C11", "C63" (letra(s) + número)
+function cmpPid(a, b) {
+  const re = /^([A-Za-z]*)(\d+)(.*)$/;
+  const ma = String(a || '').match(re);
+  const mb = String(b || '').match(re);
+  if (ma && mb) {
+    const pc = ma[1].localeCompare(mb[1]);
+    if (pc) return pc;
+    const nc = parseInt(ma[2], 10) - parseInt(mb[2], 10);
+    if (nc) return nc;
+    return ma[3].localeCompare(mb[3]);
+  }
+  return String(a || '').localeCompare(String(b || ''));
+}
+
 function printBar() {
   return `<div class="tab-print-bar no-print">
     <button class="tab-print-btn" onclick="imprimirTab()">
@@ -729,9 +744,11 @@ function renderResumen() {
   rows.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
     if (!grupos[key]) {
-      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0 };
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, minPid: r.promotor_id || '' };
       COLS.forEach(c => grupos[key][c.key] = 0);
       orden.push(key);
+    } else if (cmpPid(r.promotor_id, grupos[key].minPid) < 0) {
+      grupos[key].minPid = r.promotor_id || '';
     }
     grupos[key].proms += 1;
     COLS.forEach(c => {
@@ -752,7 +769,7 @@ function renderResumen() {
   });
 
   const filas = orden.map(k => grupos[k])
-                     .sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+                     .sort((a,b) => cmpPid(a.minPid, b.minPid));
 
   const totales = { proms: 0 };
   COLS.forEach(c => totales[c.key] = 0);
@@ -798,8 +815,10 @@ function renderVacPrima() {
   detalleData.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
     if (!grupos[key]) {
-      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, vac: 0, pv: 0 };
+      grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, vac: 0, pv: 0, minPid: r.promotor_id || '' };
       orden.push(key);
+    } else if (cmpPid(r.promotor_id, grupos[key].minPid) < 0) {
+      grupos[key].minPid = r.promotor_id || '';
     }
     grupos[key].proms += 1;
     grupos[key].vac = Math.round((grupos[key].vac + (r.vacaciones      || 0)) * 100) / 100;
@@ -808,8 +827,8 @@ function renderVacPrima() {
 
   orden.forEach(k => { grupos[k].total = Math.round((grupos[k].vac + grupos[k].pv) * 100) / 100; });
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => cmpPid(a.minPid, b.minPid));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => cmpPid(a.minPid, b.minPid));
 
   const totVac   = conGasto.reduce((s,g) => Math.round((s + g.vac)   * 100) / 100, 0);
   const totPv    = conGasto.reduce((s,g) => Math.round((s + g.pv)    * 100) / 100, 0);
@@ -846,7 +865,8 @@ function renderIsnImpuestos() {
   const grupos = {}, orden = [];
   detalleData.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
-    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, isn: 0, impuestos: 0 }; orden.push(key); }
+    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, proms: 0, isn: 0, impuestos: 0, minPid: r.promotor_id || '' }; orden.push(key); }
+    else if (cmpPid(r.promotor_id, grupos[key].minPid) < 0) grupos[key].minPid = r.promotor_id || '';
     grupos[key].proms += 1;
   });
 
@@ -856,8 +876,8 @@ function renderIsnImpuestos() {
     grupos[k].total     = Math.round((grupos[k].isn + grupos[k].impuestos) * 100) / 100;
   });
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.total > 0).sort((a,b) => cmpPid(a.minPid, b.minPid));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.total === 0).sort((a,b) => cmpPid(a.minPid, b.minPid));
 
   const totIsn       = conGasto.reduce((s,g) => Math.round((s + g.isn)       * 100) / 100, 0);
   const totImpuestos = conGasto.reduce((s,g) => Math.round((s + g.impuestos) * 100) / 100, 0);
@@ -891,11 +911,7 @@ function renderSueldosComisiones() {
   const cont = document.getElementById('tab-content');
   const ra = 'text-align:right;';
 
-  const sorted = [...detalleData].sort((a, b) =>
-    (a.cadena + a.tienda + (a.promotor_id || '')).localeCompare(
-      b.cadena + b.tienda + (b.promotor_id || '')
-    )
-  );
+  const sorted = [...detalleData].sort((a, b) => cmpPid(a.promotor_id, b.promotor_id));
 
   const totS = Math.round(sorted.reduce((s, r) => s + (r.sueldo_semanal || 0), 0) * 100) / 100;
   const totC = Math.round(sorted.reduce((s, r) => s + (r.comisiones     || 0), 0) * 100) / 100;
@@ -1014,7 +1030,8 @@ function renderTab() {
   const grupos = {}, orden = [];
   detalleData.forEach(r => {
     const key = r.cadena + '||' + r.tienda;
-    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, monto: 0, proms: 0 }; orden.push(key); }
+    if (!grupos[key]) { grupos[key] = { cadena: r.cadena, tienda: r.tienda, monto: 0, proms: 0, minPid: r.promotor_id || '' }; orden.push(key); }
+    else if (cmpPid(r.promotor_id, grupos[key].minPid) < 0) grupos[key].minPid = r.promotor_id || '';
     grupos[key].proms += 1;
   });
 
@@ -1029,8 +1046,8 @@ function renderTab() {
     });
   }
 
-  const conGasto = orden.map(k => grupos[k]).filter(g => g.monto > 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
-  const sinGasto = orden.map(k => grupos[k]).filter(g => g.monto === 0).sort((a,b) => (a.cadena+a.tienda).localeCompare(b.cadena+b.tienda));
+  const conGasto = orden.map(k => grupos[k]).filter(g => g.monto > 0).sort((a,b) => cmpPid(a.minPid, b.minPid));
+  const sinGasto = orden.map(k => grupos[k]).filter(g => g.monto === 0).sort((a,b) => cmpPid(a.minPid, b.minPid));
   const total    = conGasto.reduce((s,g) => Math.round((s + g.monto) * 100) / 100, 0);
 
   let html = printBar()

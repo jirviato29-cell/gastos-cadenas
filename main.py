@@ -648,14 +648,18 @@ def get_gastos_detalle(semana_id):
         LEFT JOIN gastos_semanales_promotor gsp
             ON gsp.semana_id = gs.semana_id AND gsp.promotor_id = gs.promotor_id
         WHERE gs.semana_id = %s
-        ORDER BY t.cadena, t.nombre, p.promotor_id
+        ORDER BY
+            CASE WHEN p.promotor_id ~ '\d'
+                 THEN REGEXP_REPLACE(p.promotor_id, '\D', '', 'g')::bigint
+                 ELSE 0 END,
+            COALESCE(p.promotor_id, '')
     """, (semana_id,))
     rows = [dict(r) for r in cur.fetchall()]
     cur.close()
     release_conn(conn)
     for r in rows:
         for k, v in r.items():
-            if k not in ('promotor', 'tienda', 'cadena') and v is not None:
+            if k not in ('promotor', 'tienda', 'cadena', 'promotor_id') and v is not None:
                 try:
                     r[k] = round(float(v), 2)
                 except Exception:
