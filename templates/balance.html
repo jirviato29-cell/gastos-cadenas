@@ -32,7 +32,7 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.55;
   min-height: 100vh;
 }
@@ -356,6 +356,10 @@ select:focus {
 /* Body del estado */
 .estado-body {
   padding: 32px 40px;
+  max-width: 600px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -383,7 +387,7 @@ select:focus {
 .sec-icon.ingreso { background: #D1FAE5; }
 .sec-icon.gasto   { background: var(--red-l); }
 .sec-title {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 2.5px;
   text-transform: uppercase;
@@ -391,23 +395,28 @@ select:focus {
 }
 
 .fila {
-  display: flex;
-  align-items: baseline;
-  padding: 7px 0;
-  font-size: 13.5px;
+  display: grid !important;
+  grid-template-columns: 350px 1fr !important;
+  column-gap: 8px;
+  padding: 8px 0 !important;
+  font-size: 16px !important;
   border-bottom: 1px dashed transparent;
   transition: background .1s;
 }
 .fila:hover { background: #F8FBFF; border-radius: 6px; padding-left: 6px; padding-right: 6px; }
 .fila-sub {
-  display: flex;
-  align-items: baseline;
-  padding: 5px 0 5px 20px;
-  font-size: 13px;
+  display: grid !important;
+  grid-template-columns: 350px 1fr !important;
+  column-gap: 8px;
+  padding: 5px 0 !important;
+  font-size: 16px !important;
 }
 .fila-sub .concepto { color: var(--text2); }
 .concepto {
-  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text);
   font-weight: 500;
 }
@@ -415,7 +424,7 @@ select:focus {
   font-weight: 500;
 }
 .detalle {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text3);
   margin-left: 7px;
   font-weight: 400;
@@ -428,10 +437,9 @@ select:focus {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   white-space: nowrap;
-  min-width: 150px;
-  text-align: right;
+  text-align: right !important;
   color: var(--navy);
-  font-size: 13.5px;
+  font-size: 16px !important;
 }
 .monto.rojo { color: var(--red); }
 .monto.verde { color: var(--green); }
@@ -441,7 +449,7 @@ select:focus {
   align-items: center;
   gap: 8px;
   padding: 10px 0 4px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -455,10 +463,12 @@ select:focus {
 }
 
 .fila-total {
-  display: flex;
+  display: grid !important;
+  grid-template-columns: 350px 1fr !important;
+  column-gap: 8px;
   align-items: center;
-  padding: 14px 10px;
-  font-size: 14.5px;
+  padding: 14px 10px !important;
+  font-size: 18px !important;
   font-weight: 700;
   border-radius: 10px;
   margin-top: 6px;
@@ -472,7 +482,7 @@ select:focus {
   border: 1px solid #FCA5A5;
 }
 .fila-total .concepto { color: var(--text); font-weight: 700; }
-.fila-total .monto { font-size: 15px; }
+.fila-total .monto { font-size: 18px !important; }
 .fila-total.ingreso-total .monto { color: var(--green); }
 .fila-total.gasto-total .monto   { color: var(--red); }
 
@@ -665,11 +675,12 @@ select:focus {
   .utilidad-value { font-size: 28px; }
   .resumen { padding: 22px 18px; }
 
-  .fila, .fila-sub, .fila-total { flex-wrap: nowrap; }
-  .concepto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 13px; }
-  .monto { flex-shrink: 0; white-space: nowrap; min-width: auto; font-size: 13px; padding-left: 8px; }
+  .fila, .fila-sub { grid-template-columns: 1fr 110px; font-size: 14px; }
+  .fila-total { grid-template-columns: 1fr 110px; padding: 12px 10px; }
+  .fila-total .monto { font-size: 16px; }
+  .concepto { font-size: 14px; }
+  .monto { font-size: 14px; }
   .detalle { display: none; }
-  .fila-total { padding: 12px 10px; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -683,11 +694,11 @@ select:focus {
   .estado { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 8px !important; }
   .estado-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; border-radius: 8px 8px 0 0 !important; }
   .resumen { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .fila { padding: 3px 0; font-size: 12px; }
-  .fila-sub { padding: 2px 0 2px 18px; font-size: 11.5px; }
-  .monto { min-width: 120px; }
+  .fila { padding: 3px 0; font-size: 13px; }
+  .fila-sub { padding: 2px 0; font-size: 13px; }
+  .monto { text-align: right; }
   .seccion { margin-bottom: 16px; }
-  .estado-body { padding: 20px 28px; }
+  .estado-body { padding: 20px 28px; max-width: 100%; }
 }
 </style>
 </head>

@@ -649,8 +649,8 @@ def get_gastos_detalle(semana_id):
             ON gsp.semana_id = gs.semana_id AND gsp.promotor_id = gs.promotor_id
         WHERE gs.semana_id = %s
         ORDER BY
-            CASE WHEN p.promotor_id ~ '\d'
-                 THEN REGEXP_REPLACE(p.promotor_id, '\D', '', 'g')::bigint
+            CASE WHEN p.promotor_id ~ '\\d'
+                 THEN REGEXP_REPLACE(p.promotor_id, '\\D', '', 'g')::bigint
                  ELSE 0 END,
             COALESCE(p.promotor_id, '')
     """, (semana_id,))
