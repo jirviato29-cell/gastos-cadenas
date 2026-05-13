@@ -684,21 +684,98 @@ select:focus {
 }
 
 /* ══════════════════════════════════════════════════════════
-   PRINT
+   PRINT / PDF  —  hoja carta, ancho completo
 ══════════════════════════════════════════════════════════ */
 @media print {
+  @page {
+    size: letter portrait;
+    margin: 1.2cm;
+  }
+
+  /* Ocultar chrome de pantalla */
   .topbar, .page-header, .controls-bar, .no-print { display: none !important; }
-  body { background: #fff !important; }
+
+  body { background: white !important; color: black !important; font-size: 13px !important; }
+
+  /* Contenedor principal: ancho completo de la hoja */
   .main { padding: 0 !important; max-width: 100% !important; }
+
+  /* Logo de impresión */
   .print-logo { display: flex !important; }
-  .estado { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 8px !important; }
-  .estado-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; border-radius: 8px 8px 0 0 !important; }
-  .resumen { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .fila { padding: 3px 0; font-size: 13px; }
-  .fila-sub { padding: 2px 0; font-size: 13px; }
-  .monto { text-align: right; }
-  .seccion { margin-bottom: 16px; }
-  .estado-body { padding: 20px 28px; max-width: 100%; }
+
+  /* Tarjeta sin sombra */
+  .estado { box-shadow: none !important; border: 1px solid #ccc !important; border-radius: 6px !important; }
+
+  /* Header — mantener fondo oscuro */
+  .estado-header {
+    background: #002855 !important;
+    color: white !important;
+    padding: 14px 18px !important;
+    border-radius: 6px 6px 0 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Body: ancho total, sin centrado de pantalla */
+  .estado-body {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 16px 20px !important;
+  }
+
+  /* Filas: columna concepto flexible, cifra en 160px */
+  .fila,
+  .fila-sub {
+    display: grid !important;
+    grid-template-columns: 1fr 160px !important;
+    font-size: 13px !important;
+    padding: 4px 0 !important;
+  }
+
+  .fila-total {
+    display: grid !important;
+    grid-template-columns: 1fr 160px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    padding: 8px 0 !important;
+  }
+
+  .fila .monto,
+  .fila-sub .monto,
+  .fila-total .monto {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .fila-total .monto { font-size: 15px !important; }
+
+  /* Secciones: evitar corte entre páginas */
+  .seccion {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 14px !important;
+  }
+
+  /* Sub-encabezados */
+  .fila-subtitulo { font-size: 11px !important; padding: 6px 0 3px !important; }
+
+  /* Resumen ejecutivo — mantener fondo oscuro */
+  .resumen {
+    background: #002855 !important;
+    color: white !important;
+    padding: 14px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin-top: 10px !important;
+  }
+
+  .utilidad-value { font-size: 24px !important; }
+  .res-card-value { font-size: 16px !important; }
+
+  /* Concepto: puede truncar si es muy largo en print */
+  .concepto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .detalle { display: inline !important; font-size: 10px !important; }
 }
 </style>
 </head>
